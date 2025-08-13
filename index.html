@@ -40,9 +40,20 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
         
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
+        .status-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+        
+        .status-indicator.connected {
+            background: #4caf50;
+        }
+        
+        .status-indicator.error {
+            background: #f44336;
         }
         
         .nav-tabs {
@@ -206,6 +217,11 @@
             color: #333;
         }
         
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
         .table-container {
             overflow-x: auto;
             margin-top: 20px;
@@ -356,11 +372,29 @@
             font-weight: bold;
         }
         
-        .icon {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            margin-right: 8px;
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .input-group .form-control {
+            flex: 1;
+        }
+        
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .editable-cell:hover {
+            background: #f0f0f0;
+        }
+        
+        .editable-cell input {
+            width: 100%;
+            border: 1px solid #667eea;
+            padding: 5px;
         }
     </style>
 </head>
@@ -373,242 +407,257 @@
         <div class="header">
             <h1>🏭 GAI寄庫庫存量水位補單系統</h1>
             <p>智能化冷鏈倉儲管理平台 | 8座冷凍庫 · 5座冷藏庫</p>
+            <div class="status-indicator" id="connectionStatus">
+                連接狀態: 檢查中...
+            </div>
         </div>
         
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchTab('dashboard')">📊 主控台</button>
-            <button class="nav-tab" onclick="switchTab('customer')">👥 客戶需求</button>
-            <button class="nav-tab" onclick="switchTab('inventory')">📦 庫存分析</button>
-            <button class="nav-tab" onclick="switchTab('prediction')">🤖 AI預測</button>
-            <button class="nav-tab" onclick="switchTab('replenishment')">📝 補單建議</button>
-            <button class="nav-tab" onclick="switchTab('capacity')">🏢 倉容管理</button>
-            <button class="nav-tab" onclick="switchTab('reports')">📈 報表</button>
-            <button class="nav-tab" onclick="switchTab('settings')">⚙️ 設定</button>
+            <button class="nav-tab" onclick="switchTab('inventory')">📦 即時庫存</button>
+            <button class="nav-tab" onclick="switchTab('demand')">📈 需求設定</button>
+            <button class="nav-tab" onclick="switchTab('prediction')">🤖 AI預測分析</button>
+            <button class="nav-tab" onclick="switchTab('replenishment')">📝 補單管理</button>
+            <button class="nav-tab" onclick="switchTab('capacity')">🏢 倉容監控</button>
+            <button class="nav-tab" onclick="switchTab('settings')">⚙️ 系統設定</button>
         </div>
         
         <div class="content">
             <!-- 主控台 -->
             <div id="dashboard" class="tab-content active">
                 <h2>即時營運總覽</h2>
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-title">❄️ 冷凍庫使用率</div>
-                        <div class="kpi-value">72%</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 72%">72%</div>
-                        </div>
-                        <div class="kpi-label">8座冷凍庫 | 可用: 224個棧板位</div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-title">🧊 冷藏庫使用率</div>
-                        <div class="kpi-value">65%</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 65%">65%</div>
-                        </div>
-                        <div class="kpi-label">5座冷藏庫 | 可用: 105個棧板位</div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-title">📊 庫存週轉天數</div>
-                        <div class="kpi-value">12.5</div>
-                        <div class="kpi-label">天 | 目標: <15天</div>
-                    </div>
-                    
-                    <div class="card alert-card">
-                        <div class="card-title">⚠️ 待處理警報</div>
-                        <div class="kpi-value">3</div>
-                        <div class="kpi-label">
-                            • 2個品項低於安全庫存<br>
-                            • 1個倉庫容量>85%
-                        </div>
-                    </div>
+                <div style="text-align: right; margin-bottom: 20px;">
+                    <button class="btn btn-warning" onclick="refreshDashboard()">🔄 重新整理</button>
+                    <span style="margin-left: 10px; color: #666;" id="lastUpdate">最後更新: --</span>
                 </div>
                 
-                <h3>快速操作</h3>
+                <div class="dashboard-grid" id="dashboardKPIs">
+                    <!-- KPI 卡片將動態載入 -->
+                </div>
+                
+                <h3>系統快速操作</h3>
                 <div style="margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="runAIPrediction()">🤖 執行AI預測</button>
-                    <button class="btn btn-success" onclick="generateReplenishment()">📝 產生補單建議</button>
-                    <button class="btn btn-warning" onclick="syncGoogleSheet()">🔄 同步Google Sheet</button>
-                    <button class="btn btn-secondary" onclick="exportReport()">📥 匯出報表</button>
+                    <button class="btn btn-primary" onclick="runFullAnalysis()">🚀 執行完整分析流程</button>
+                    <button class="btn btn-success" onclick="generateAllSuggestions()">📋 產生所有建議</button>
+                    <button class="btn btn-secondary" onclick="exportDashboard()">📥 匯出儀表板</button>
                 </div>
                 
-                <h3 style="margin-top: 30px;">今日待辦事項</h3>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>時間</th>
-                                <th>類型</th>
-                                <th>描述</th>
-                                <th>狀態</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="todoList">
-                            <tr>
-                                <td>09:00</td>
-                                <td>補單審核</td>
-                                <td>客戶A - 冷凍品補貨建議待確認</td>
-                                <td><span class="status-badge status-warning">待處理</span></td>
-                                <td><button class="btn btn-primary" style="padding: 5px 15px;">查看</button></td>
-                            </tr>
-                            <tr>
-                                <td>10:30</td>
-                                <td>容量告警</td>
-                                <td>冷凍庫#3 使用率達88%</td>
-                                <td><span class="status-badge status-danger">緊急</span></td>
-                                <td><button class="btn btn-primary" style="padding: 5px 15px;">處理</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <h3 style="margin-top: 30px;">系統警報與通知</h3>
+                <div id="alertsContainer">
+                    <!-- 警報將動態載入 -->
                 </div>
             </div>
             
-            <!-- 客戶需求 -->
-            <div id="customer" class="tab-content">
-                <h2>客戶需求確認</h2>
-                <div class="form-group">
-                    <label>選擇客戶</label>
-                    <select class="form-control" id="customerSelect">
-                        <option value="">請選擇客戶...</option>
-                        <option value="A">客戶A - 生鮮食品</option>
-                        <option value="B">客戶B - 冷凍食品</option>
-                        <option value="C">客戶C - 醫藥冷鏈</option>
-                    </select>
-                </div>
+            <!-- 即時庫存 -->
+            <div id="inventory" class="tab-content">
+                <h2>即時庫存管理</h2>
                 
                 <div class="form-group">
-                    <label>服務水準設定</label>
-                    <select class="form-control" id="serviceLevel">
-                        <option value="P">P級 (99.5% 服務水準)</option>
-                        <option value="Q">Q級 (97.5% 服務水準)</option>
-                        <option value="R">R級 (95% 服務水準)</option>
-                    </select>
+                    <div class="input-group">
+                        <div style="flex: 1;">
+                            <label>快速搜尋</label>
+                            <input type="text" class="form-control" id="inventorySearch" placeholder="輸入SKU或品名..." onkeyup="searchInventory()">
+                        </div>
+                        <div>
+                            <label>溫層篩選</label>
+                            <select class="form-control" id="tempFilter" onchange="filterInventory()">
+                                <option value="">全部</option>
+                                <option value="冷凍">冷凍 (-18°C)</option>
+                                <option value="冷藏">冷藏 (4°C)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="addNewInventory()">➕ 新增庫存</button>
+                        <button class="btn btn-success" onclick="refreshInventory()">🔄 重新整理</button>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label>品項清單上傳</label>
-                    <input type="file" class="form-control" id="itemListFile" accept=".csv,.xlsx">
-                </div>
-                
-                <button class="btn btn-primary" onclick="confirmCustomerDemand()">確認需求</button>
-                <button class="btn btn-secondary" onclick="downloadTemplate()">下載範本</button>
-                
-                <h3 style="margin-top: 30px;">已確認品項</h3>
                 <div class="table-container">
-                    <table>
+                    <table id="inventoryTable">
                         <thead>
                             <tr>
-                                <th>品項代碼</th>
+                                <th>SKU</th>
                                 <th>品名</th>
                                 <th>溫層</th>
-                                <th>預估月需求</th>
-                                <th>安全庫存</th>
-                                <th>狀態</th>
-                            </tr>
-                        </thead>
-                        <tbody id="confirmedItems">
-                            <tr>
-                                <td>SKU001</td>
-                                <td>冷凍牛肉</td>
-                                <td>冷凍 (-18°C)</td>
-                                <td>500箱</td>
-                                <td>100箱</td>
-                                <td><span class="status-badge status-normal">正常</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- 庫存分析 -->
-            <div id="inventory" class="tab-content">
-                <h2>庫存分析</h2>
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-title">📦 總庫存量</div>
-                        <div class="kpi-value">12,450</div>
-                        <div class="kpi-label">箱</div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-title">⏱️ 平均庫齡</div>
-                        <div class="kpi-value">8.2</div>
-                        <div class="kpi-label">天</div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-title">📈 Fill Rate</div>
-                        <div class="kpi-value">96.5%</div>
-                        <div class="kpi-label">本月</div>
-                    </div>
-                </div>
-                
-                <h3>庫存明細</h3>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>品項</th>
                                 <th>現有庫存</th>
                                 <th>在途量</th>
                                 <th>可用量</th>
                                 <th>安全庫存</th>
-                                <th>補貨點</th>
-                                <th>建議補貨</th>
+                                <th>狀態</th>
+                                <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody id="inventoryDetails">
+                        <tbody id="inventoryTableBody">
                             <!-- 動態載入 -->
                         </tbody>
                     </table>
                 </div>
             </div>
             
-            <!-- AI預測 -->
-            <div id="prediction" class="tab-content">
-                <h2>AI需求預測</h2>
-                <div class="form-group">
-                    <label>預測期間</label>
-                    <select class="form-control">
-                        <option>未來7天</option>
-                        <option>未來14天</option>
-                        <option>未來30天</option>
-                    </select>
-                </div>
+            <!-- 需求設定 -->
+            <div id="demand" class="tab-content">
+                <h2>客戶需求與服務水準設定</h2>
                 
-                <div class="form-group">
-                    <label>特殊因素考量</label>
-                    <div>
-                        <label><input type="checkbox"> 節慶促銷</label>
-                        <label style="margin-left: 20px;"><input type="checkbox"> 天氣影響</label>
-                        <label style="margin-left: 20px;"><input type="checkbox"> 季節性調整</label>
-                    </div>
-                </div>
-                
-                <button class="btn btn-primary" onclick="runPrediction()">執行預測</button>
-                
-                <div id="predictionResults" style="margin-top: 30px;">
-                    <!-- 預測結果顯示區 -->
-                </div>
-            </div>
-            
-            <!-- 補單建議 -->
-            <div id="replenishment" class="tab-content">
-                <h2>補單建議</h2>
                 <div class="dashboard-grid">
                     <div class="card">
-                        <div class="card-title">📝 待審核補單</div>
-                        <div class="kpi-value">5</div>
-                        <div class="kpi-label">張</div>
+                        <div class="card-title">新增需求設定</div>
+                        <div class="form-group">
+                            <label>SKU代碼</label>
+                            <input type="text" class="form-control" id="demandSKU" placeholder="例: SKU001">
+                        </div>
+                        <div class="form-group">
+                            <label>品名</label>
+                            <input type="text" class="form-control" id="demandName" placeholder="例: 冷凍牛肉">
+                        </div>
+                        <div class="form-group">
+                            <label>客戶</label>
+                            <input type="text" class="form-control" id="demandCustomer" placeholder="例: 客戶A">
+                        </div>
+                        <div class="form-group">
+                            <label>服務水準</label>
+                            <select class="form-control" id="demandServiceLevel">
+                                <option value="P">P級 (99.5% - z=2.58)</option>
+                                <option value="Q" selected>Q級 (97.5% - z=1.96)</option>
+                                <option value="R">R級 (95% - z=1.645)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>平均日需求</label>
+                            <input type="number" class="form-control" id="demandDaily" placeholder="例: 100">
+                        </div>
+                        <div class="form-group">
+                            <label>交期(天)</label>
+                            <input type="number" class="form-control" id="demandLeadTime" value="7">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveDemand()">儲存需求設定</button>
                     </div>
                     
                     <div class="card">
-                        <div class="card-title">💰 預估補貨金額</div>
-                        <div class="kpi-value">NT$ 2.5M</div>
-                        <div class="kpi-label">本週</div>
+                        <div class="card-title">服務水準說明</div>
+                        <table style="width: 100%;">
+                            <tr>
+                                <td><strong>P級</strong></td>
+                                <td>99.5% 服務水準</td>
+                                <td>z = 2.58</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Q級</strong></td>
+                                <td>97.5% 服務水準</td>
+                                <td>z = 1.96</td>
+                            </tr>
+                            <tr>
+                                <td><strong>R級</strong></td>
+                                <td>95% 服務水準</td>
+                                <td>z = 1.645</td>
+                            </tr>
+                        </table>
+                        
+                        <h4 style="margin-top: 20px;">計算公式</h4>
+                        <p><strong>安全庫存(SS)</strong> = z × σ_L</p>
+                        <p><strong>補貨點(ROP)</strong> = d̄ × LT + SS</p>
+                        <p><strong>目標庫存</strong> = d̄ × (LT + RP) + SS</p>
+                        <p style="font-size: 0.9em; color: #666;">
+                            其中：z=服務水準係數, σ_L=交期需求標準差, d̄=平均需求, LT=交期, RP=檢視週期
+                        </p>
                     </div>
+                </div>
+                
+                <h3 style="margin-top: 30px;">已設定的需求清單</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>品名</th>
+                                <th>客戶</th>
+                                <th>服務水準</th>
+                                <th>日需求</th>
+                                <th>交期</th>
+                                <th>安全庫存</th>
+                                <th>補貨點</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="demandTableBody">
+                            <!-- 動態載入 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- AI預測分析 -->
+            <div id="prediction" class="tab-content">
+                <h2>AI預測分析引擎</h2>
+                
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-title">預測參數設定</div>
+                        <div class="form-group">
+                            <label>預測期間</label>
+                            <select class="form-control" id="predictionPeriod">
+                                <option value="7">未來7天</option>
+                                <option value="14">未來14天</option>
+                                <option value="30" selected>未來30天</option>
+                                <option value="60">未來60天</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>預測方法</label>
+                            <select class="form-control" id="predictionMethod">
+                                <option value="MA">移動平均法</option>
+                                <option value="ES">指數平滑法</option>
+                                <option value="ARIMA">ARIMA模型</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>特殊因素考量</label>
+                            <div>
+                                <label><input type="checkbox" id="seasonalFactor"> 季節性因素</label><br>
+                                <label><input type="checkbox" id="promotionFactor"> 促銷活動</label><br>
+                                <label><input type="checkbox" id="weatherFactor"> 天氣影響</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="runPrediction()">🤖 執行預測</button>
+                        <button class="btn btn-secondary" onclick="viewHistory()">📊 查看歷史</button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">預測結果摘要</div>
+                        <div id="predictionSummary">
+                            <p>尚未執行預測...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 30px;">預測結果詳情</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>品名</th>
+                                <th>預測期間</th>
+                                <th>預測需求</th>
+                                <th>標準差</th>
+                                <th>信賴區間</th>
+                                <th>建議行動</th>
+                            </tr>
+                        </thead>
+                        <tbody id="predictionTableBody">
+                            <!-- 動態載入 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 補單管理 -->
+            <div id="replenishment" class="tab-content">
+                <h2>智能補單管理</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="generateReplenishment()">🔄 產生補單建議</button>
+                    <button class="btn btn-success" onclick="approveAllSuggestions()">✅ 全部核准</button>
+                    <button class="btn btn-warning" onclick="exportReplenishment()">📥 匯出補單</button>
+                    <button class="btn btn-danger" onclick="clearPending()">🗑️ 清除待處理</button>
                 </div>
                 
                 <h3>補單建議清單</h3>
@@ -616,111 +665,88 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>選擇</th>
-                                <th>品項</th>
+                                <th><input type="checkbox" id="selectAll" onchange="selectAllReplenishments()"></th>
+                                <th>SKU</th>
+                                <th>品名</th>
+                                <th>現有庫存</th>
+                                <th>安全庫存</th>
+                                <th>補貨點</th>
                                 <th>建議補貨量</th>
-                                <th>預計到貨日</th>
-                                <th>供應商</th>
+                                <th>預計金額</th>
                                 <th>優先級</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody id="replenishmentList">
+                        <tbody id="replenishmentTableBody">
                             <!-- 動態載入 -->
                         </tbody>
                     </table>
                 </div>
-                
-                <button class="btn btn-success" onclick="approveSelected()">核准選中項目</button>
-                <button class="btn btn-primary" onclick="exportReplenishment()">匯出補單</button>
             </div>
             
-            <!-- 倉容管理 -->
+            <!-- 倉容監控 -->
             <div id="capacity" class="tab-content">
-                <h2>倉容管理</h2>
-                <h3>冷凍庫 (8座)</h3>
-                <div class="dashboard-grid">
-                    <div class="card" id="freezer1">
-                        <div class="card-title">冷凍庫 #1</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 75%">75%</div>
-                        </div>
-                        <div class="kpi-label">75/100 棧板位</div>
-                    </div>
-                    <div class="card" id="freezer2">
-                        <div class="card-title">冷凍庫 #2</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 60%">60%</div>
-                        </div>
-                        <div class="kpi-label">60/100 棧板位</div>
-                    </div>
-                    <!-- 更多冷凍庫... -->
+                <h2>倉容即時監控</h2>
+                
+                <h3>❄️ 冷凍庫 (8座)</h3>
+                <div class="dashboard-grid" id="freezerCapacity">
+                    <!-- 動態載入 -->
                 </div>
                 
-                <h3 style="margin-top: 30px;">冷藏庫 (5座)</h3>
-                <div class="dashboard-grid">
-                    <div class="card" id="cooler1">
-                        <div class="card-title">冷藏庫 #1</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 55%">55%</div>
-                        </div>
-                        <div class="kpi-label">44/80 棧板位</div>
-                    </div>
-                    <!-- 更多冷藏庫... -->
+                <h3 style="margin-top: 30px;">🧊 冷藏庫 (5座)</h3>
+                <div class="dashboard-grid" id="coolerCapacity">
+                    <!-- 動態載入 -->
+                </div>
+                
+                <h3 style="margin-top: 30px;">倉容分配建議</h3>
+                <div id="capacityRecommendations">
+                    <!-- 動態載入 -->
                 </div>
             </div>
             
-            <!-- 報表 -->
-            <div id="reports" class="tab-content">
-                <h2>報表中心</h2>
-                <div class="form-group">
-                    <label>報表類型</label>
-                    <select class="form-control">
-                        <option>庫存週轉報表</option>
-                        <option>補貨效率分析</option>
-                        <option>預測準確度報表</option>
-                        <option>倉容使用率報表</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>報表期間</label>
-                    <input type="date" class="form-control" style="width: 200px; display: inline-block;">
-                    至
-                    <input type="date" class="form-control" style="width: 200px; display: inline-block;">
-                </div>
-                
-                <button class="btn btn-primary" onclick="generateReport()">產生報表</button>
-                <button class="btn btn-secondary" onclick="scheduleReport()">排程設定</button>
-            </div>
-            
-            <!-- 設定 -->
+            <!-- 系統設定 -->
             <div id="settings" class="tab-content">
                 <h2>系統設定</h2>
-                <div class="form-group">
-                    <label>Google Sheet ID</label>
-                    <input type="text" class="form-control" value="1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts" readonly>
+                
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-title">Google Sheet 連接設定</div>
+                        <div class="form-group">
+                            <label>Sheet ID</label>
+                            <input type="text" class="form-control" id="sheetId" value="1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Web App URL</label>
+                            <input type="text" class="form-control" id="webAppUrl" placeholder="輸入您的 Google Apps Script Web App URL">
+                        </div>
+                        <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
+                        <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">系統參數</div>
+                        <div class="form-group">
+                            <label>預設檢視週期(天)</label>
+                            <input type="number" class="form-control" id="reviewPeriod" value="7">
+                        </div>
+                        <div class="form-group">
+                            <label>預設交期(天)</label>
+                            <input type="number" class="form-control" id="defaultLeadTime" value="7">
+                        </div>
+                        <div class="form-group">
+                            <label>容量警戒線(%)</label>
+                            <input type="number" class="form-control" id="capacityAlert" value="85">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveSystemSettings()">儲存參數</button>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label>資料同步頻率</label>
-                    <select class="form-control">
-                        <option>每小時</option>
-                        <option>每日 02:00</option>
-                        <option>每週一 00:00</option>
-                    </select>
+                <h3 style="margin-top: 30px;">資料初始化</h3>
+                <div class="card">
+                    <p>首次使用請執行初始化，將建立所有必要的工作表結構。</p>
+                    <button class="btn btn-warning" onclick="initializeSystem()">🚀 初始化系統</button>
+                    <button class="btn btn-danger" onclick="resetSystem()">⚠️ 重置系統（清除所有資料）</button>
                 </div>
-                
-                <div class="form-group">
-                    <label>預設服務水準</label>
-                    <select class="form-control">
-                        <option>P級 (99.5%)</option>
-                        <option>Q級 (97.5%)</option>
-                        <option>R級 (95%)</option>
-                    </select>
-                </div>
-                
-                <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
             </div>
         </div>
     </div>
@@ -739,11 +765,62 @@
     </div>
     
     <script>
-        // Google Apps Script Web App URL - 需要部署後替換
-        // const GAS_URL = 'https://script.google.com/macros/s/AKfycbxrGNdigwXqsF6CxstKc6HvOMiGNHhbLyibpd3j70tMRYtadibkUvTZXiGnYbx-kNzP/exec';
+        // 系統配置
+        let GAS_URL = localStorage.getItem('https://script.google.com/macros/s/AKfycbycKOpgV2RkmHGivQfbndD-91a5Gheol65zoV3RzhsB5TyrDz4s77WAF5tVmOEhWa8U/exec') || '';
+        const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
-        // 暫時關閉後端連接，使用本地模擬
-        const USE_MOCK_DATA = true;
+        // 系統狀態
+        let systemData = {
+            inventory: [],
+            demands: [],
+            predictions: [],
+            replenishments: [],
+            capacity: {
+                freezers: [],
+                coolers: []
+            }
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('系統啟動...');
+            
+            // 載入儲存的設定
+            const savedUrl = localStorage.getItem('GAS_URL');
+            if (savedUrl) {
+                document.getElementById('webAppUrl').value = savedUrl;
+                GAS_URL = savedUrl;
+            }
+            
+            // 檢查連接
+            checkConnection();
+            
+            // 載入主控台
+            refreshDashboard();
+        });
+        
+        // 檢查連接狀態
+        function checkConnection() {
+            const statusEl = document.getElementById('connectionStatus');
+            
+            if (!GAS_URL) {
+                statusEl.textContent = '連接狀態: 未設定';
+                statusEl.className = 'status-indicator error';
+                return;
+            }
+            
+            fetch(`${GAS_URL}?action=ping`)
+                .then(response => response.json())
+                .then(data => {
+                    statusEl.textContent = '連接狀態: 已連接';
+                    statusEl.className = 'status-indicator connected';
+                })
+                .catch(error => {
+                    statusEl.textContent = '連接狀態: 連接失敗';
+                    statusEl.className = 'status-indicator error';
+                    console.error('Connection error:', error);
+                });
+        }
         
         // 切換標籤
         function switchTab(tabName) {
@@ -769,13 +846,22 @@
         function loadTabData(tabName) {
             switch(tabName) {
                 case 'dashboard':
-                    loadDashboard();
+                    refreshDashboard();
                     break;
                 case 'inventory':
-                    loadInventory();
+                    refreshInventory();
+                    break;
+                case 'demand':
+                    loadDemands();
+                    break;
+                case 'prediction':
+                    loadPredictions();
                     break;
                 case 'replenishment':
-                    loadReplenishment();
+                    loadReplenishments();
+                    break;
+                case 'capacity':
+                    loadCapacity();
                     break;
             }
         }
@@ -802,276 +888,677 @@
             document.getElementById('modal').classList.remove('active');
         }
         
-        // 載入儀表板資料
-        function loadDashboard() {
-            // 暫時使用模擬資料，實際部署時再連接後端
-            console.log('Loading dashboard...');
-            // showLoading();
-            // fetch(`${GAS_URL}?action=getDashboard`)
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         updateDashboard(data);
-            //         hideLoading();
-            //     })
-            //     .catch(error => {
-            //         console.error('Error:', error);
-            //         hideLoading();
-            //     });
+        // API 呼叫函數
+        function callAPI(action, data = {}) {
+            if (!GAS_URL) {
+                alert('請先設定 Google Apps Script Web App URL');
+                switchTab('settings');
+                return Promise.reject('No URL configured');
+            }
+            
+            showLoading();
+            
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain',
+                },
+                body: JSON.stringify({
+                    action: action,
+                    ...data
+                })
+            };
+            
+            return fetch(GAS_URL, options)
+                .then(response => response.json())
+                .then(result => {
+                    hideLoading();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    return result;
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('API Error:', error);
+                    throw error;
+                });
         }
         
-        // 更新儀表板
+        // === 主控台功能 ===
+        function refreshDashboard() {
+            callAPI('getDashboard')
+                .then(data => {
+                    updateDashboard(data);
+                    document.getElementById('lastUpdate').textContent = 
+                        `最後更新: ${new Date().toLocaleString('zh-TW')}`;
+                })
+                .catch(error => {
+                    console.error('Dashboard error:', error);
+                });
+        }
+        
         function updateDashboard(data) {
-            if (!data || !data.kpi) return;
+            const container = document.getElementById('dashboardKPIs');
             
-            // 更新 KPI 數值
-            const freezerCard = document.querySelector('#dashboard .card:nth-child(1) .kpi-value');
-            if (freezerCard) freezerCard.textContent = data.kpi.freezerUsage + '%';
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-title">❄️ 冷凍庫使用率</div>
+                    <div class="kpi-value">${data.freezerUsage || 0}%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${data.freezerUsage || 0}%">${data.freezerUsage || 0}%</div>
+                    </div>
+                    <div class="kpi-label">8座冷凍庫 | 可用: ${data.freezerAvailable || 0}個棧板位</div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">🧊 冷藏庫使用率</div>
+                    <div class="kpi-value">${data.coolerUsage || 0}%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${data.coolerUsage || 0}%">${data.coolerUsage || 0}%</div>
+                    </div>
+                    <div class="kpi-label">5座冷藏庫 | 可用: ${data.coolerAvailable || 0}個棧板位</div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">📦 總SKU數</div>
+                    <div class="kpi-value">${data.totalSKUs || 0}</div>
+                    <div class="kpi-label">個品項</div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">⚠️ 低庫存警報</div>
+                    <div class="kpi-value">${data.lowStockCount || 0}</div>
+                    <div class="kpi-label">個品項需補貨</div>
+                </div>
+            `;
             
-            const coolerCard = document.querySelector('#dashboard .card:nth-child(2) .kpi-value');
-            if (coolerCard) coolerCard.textContent = data.kpi.coolerUsage + '%';
-            
-            // 更新待辦事項
-            if (data.todos && data.todos.length > 0) {
-                const todoList = document.getElementById('todoList');
-                if (todoList) {
-                    todoList.innerHTML = data.todos.map(todo => `
-                        <tr>
-                            <td>${todo.dueTime || '09:00'}</td>
-                            <td>${todo.type}</td>
-                            <td>${todo.description}</td>
-                            <td><span class="status-badge status-${todo.priority === 'HIGH' ? 'danger' : 'warning'}">待處理</span></td>
-                            <td><button class="btn btn-primary" style="padding: 5px 15px;">查看</button></td>
-                        </tr>
-                    `).join('');
-                }
+            // 更新警報
+            const alertsContainer = document.getElementById('alertsContainer');
+            if (data.alerts && data.alerts.length > 0) {
+                alertsContainer.innerHTML = data.alerts.map(alert => `
+                    <div class="alert-card" style="margin-bottom: 10px; padding: 15px;">
+                        <strong>${alert.type}:</strong> ${alert.message}
+                    </div>
+                `).join('');
+            } else {
+                alertsContainer.innerHTML = '<p style="color: #666;">目前無警報</p>';
             }
         }
         
-        // 載入庫存資料
-        function loadInventory() {
-            console.log('Loading inventory...');
-            // showLoading();
-            // fetch(`${GAS_URL}?action=getInventory`)
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         updateInventoryTable(data);
-            //         hideLoading();
-            //     })
-            //     .catch(error => {
-            //         console.error('Error:', error);
-            //         hideLoading();
-            //     });
+        // === 庫存管理功能 ===
+        function refreshInventory() {
+            callAPI('getInventory')
+                .then(data => {
+                    systemData.inventory = data.items || [];
+                    displayInventory();
+                })
+                .catch(error => {
+                    console.error('Inventory error:', error);
+                });
         }
         
-        // 更新庫存表格
-        function updateInventoryTable(data) {
-            if (!data || !data.items) return;
+        function displayInventory() {
+            const tbody = document.getElementById('inventoryTableBody');
+            const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
+            const tempFilter = document.getElementById('tempFilter').value;
             
-            const tbody = document.getElementById('inventoryDetails');
-            if (tbody) {
-                tbody.innerHTML = data.items.map(item => `
+            let filtered = systemData.inventory;
+            
+            // 搜尋過濾
+            if (searchTerm) {
+                filtered = filtered.filter(item => 
+                    item.sku.toLowerCase().includes(searchTerm) || 
+                    item.name.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // 溫層過濾
+            if (tempFilter) {
+                filtered = filtered.filter(item => item.tempZone === tempFilter);
+            }
+            
+            tbody.innerHTML = filtered.map(item => {
+                const status = item.available < item.safetyStock ? 'danger' : 
+                              item.available < item.rop ? 'warning' : 'normal';
+                
+                return `
                     <tr>
                         <td>${item.sku}</td>
-                        <td>${item.currentStock || 0}</td>
-                        <td>${item.inTransit || 0}</td>
+                        <td>${item.name}</td>
+                        <td>${item.tempZone}</td>
+                        <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'currentStock')">${item.currentStock || 0}</td>
+                        <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'inTransit')">${item.inTransit || 0}</td>
                         <td>${item.available || 0}</td>
+                        <td>${item.safetyStock || 0}</td>
+                        <td><span class="status-badge status-${status}">${
+                            status === 'danger' ? '缺貨' : 
+                            status === 'warning' ? '低庫存' : '正常'
+                        }</span></td>
+                        <td>
+                            <button class="btn btn-primary" style="padding: 5px 10px;" onclick="updateInventoryItem('${item.sku}')">更新</button>
+                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteInventoryItem('${item.sku}')">刪除</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function searchInventory() {
+            displayInventory();
+        }
+        
+        function filterInventory() {
+            displayInventory();
+        }
+        
+        function addNewInventory() {
+            showModal('新增庫存', `
+                <div class="form-group">
+                    <label>SKU</label>
+                    <input type="text" class="form-control" id="newSKU">
+                </div>
+                <div class="form-group">
+                    <label>品名</label>
+                    <input type="text" class="form-control" id="newName">
+                </div>
+                <div class="form-group">
+                    <label>溫層</label>
+                    <select class="form-control" id="newTempZone">
+                        <option value="冷凍">冷凍 (-18°C)</option>
+                        <option value="冷藏">冷藏 (4°C)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>初始庫存</label>
+                    <input type="number" class="form-control" id="newStock" value="0">
+                </div>
+                <button class="btn btn-primary" onclick="saveNewInventory()">儲存</button>
+            `);
+        }
+        
+        function saveNewInventory() {
+            const data = {
+                sku: document.getElementById('newSKU').value,
+                name: document.getElementById('newName').value,
+                tempZone: document.getElementById('newTempZone').value,
+                currentStock: parseInt(document.getElementById('newStock').value) || 0
+            };
+            
+            callAPI('addInventory', data)
+                .then(result => {
+                    closeModal();
+                    refreshInventory();
+                    alert('庫存新增成功！');
+                })
+                .catch(error => {
+                    alert('新增失敗: ' + error.message);
+                });
+        }
+        
+        // === 需求設定功能 ===
+        function saveDemand() {
+            const data = {
+                sku: document.getElementById('demandSKU').value,
+                name: document.getElementById('demandName').value,
+                customer: document.getElementById('demandCustomer').value,
+                serviceLevel: document.getElementById('demandServiceLevel').value,
+                dailyDemand: parseFloat(document.getElementById('demandDaily').value) || 0,
+                leadTime: parseInt(document.getElementById('demandLeadTime').value) || 7
+            };
+            
+            if (!data.sku || !data.name) {
+                alert('請填寫 SKU 和品名');
+                return;
+            }
+            
+            callAPI('saveDemand', data)
+                .then(result => {
+                    alert('需求設定已儲存！');
+                    document.getElementById('demandSKU').value = '';
+                    document.getElementById('demandName').value = '';
+                    document.getElementById('demandDaily').value = '';
+                    loadDemands();
+                })
+                .catch(error => {
+                    alert('儲存失敗: ' + error.message);
+                });
+        }
+        
+        function loadDemands() {
+            callAPI('getDemands')
+                .then(data => {
+                    systemData.demands = data.demands || [];
+                    displayDemands();
+                })
+                .catch(error => {
+                    console.error('Demands error:', error);
+                });
+        }
+        
+        function displayDemands() {
+            const tbody = document.getElementById('demandTableBody');
+            
+            tbody.innerHTML = systemData.demands.map(demand => `
+                <tr>
+                    <td>${demand.sku}</td>
+                    <td>${demand.name}</td>
+                    <td>${demand.customer}</td>
+                    <td>${demand.serviceLevel}</td>
+                    <td>${demand.dailyDemand}</td>
+                    <td>${demand.leadTime}天</td>
+                    <td>${demand.safetyStock || 0}</td>
+                    <td>${demand.rop || 0}</td>
+                    <td>
+                        <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteDemand('${demand.sku}')">刪除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // === AI預測功能 ===
+        function runPrediction() {
+            const period = document.getElementById('predictionPeriod').value;
+            const method = document.getElementById('predictionMethod').value;
+            
+            callAPI('runPrediction', {
+                period: period,
+                method: method,
+                seasonal: document.getElementById('seasonalFactor').checked,
+                promotion: document.getElementById('promotionFactor').checked,
+                weather: document.getElementById('weatherFactor').checked
+            })
+                .then(result => {
+                    document.getElementById('predictionSummary').innerHTML = `
+                        <p><strong>預測完成！</strong></p>
+                        <p>處理品項數: ${result.itemCount || 0}</p>
+                        <p>預測期間: ${period}天</p>
+                        <p>平均準確度: ${result.accuracy || 95}%</p>
+                    `;
+                    loadPredictions();
+                })
+                .catch(error => {
+                    alert('預測失敗: ' + error.message);
+                });
+        }
+        
+        function loadPredictions() {
+            callAPI('getPredictions')
+                .then(data => {
+                    systemData.predictions = data.predictions || [];
+                    displayPredictions();
+                })
+                .catch(error => {
+                    console.error('Predictions error:', error);
+                });
+        }
+        
+        function displayPredictions() {
+            const tbody = document.getElementById('predictionTableBody');
+            
+            tbody.innerHTML = systemData.predictions.map(pred => `
+                <tr>
+                    <td>${pred.sku}</td>
+                    <td>${pred.name}</td>
+                    <td>${pred.period}天</td>
+                    <td>${pred.forecast}</td>
+                    <td>${pred.stdDev}</td>
+                    <td>${pred.confidenceInterval}</td>
+                    <td>${pred.action}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // === 補單管理功能 ===
+        function generateReplenishment() {
+            callAPI('generateReplenishment')
+                .then(result => {
+                    alert(`已產生 ${result.count || 0} 筆補單建議`);
+                    loadReplenishments();
+                })
+                .catch(error => {
+                    alert('產生補單失敗: ' + error.message);
+                });
+        }
+        
+        function loadReplenishments() {
+            callAPI('getReplenishments')
+                .then(data => {
+                    systemData.replenishments = data.suggestions || [];
+                    displayReplenishments();
+                })
+                .catch(error => {
+                    console.error('Replenishments error:', error);
+                });
+        }
+        
+        function displayReplenishments() {
+            const tbody = document.getElementById('replenishmentTableBody');
+            
+            tbody.innerHTML = systemData.replenishments.map((item, index) => {
+                const priority = item.priority || (item.currentStock < item.safetyStock ? 'HIGH' : 'MEDIUM');
+                
+                return `
+                    <tr>
+                        <td><input type="checkbox" value="${item.sku}" class="replenishment-check"></td>
+                        <td>${item.sku}</td>
+                        <td>${item.name}</td>
+                        <td>${item.currentStock || 0}</td>
                         <td>${item.safetyStock || 0}</td>
                         <td>${item.rop || 0}</td>
                         <td>${item.suggestedQty || 0}</td>
+                        <td>NT$ ${(item.suggestedQty * 1000).toLocaleString()}</td>
+                        <td><span class="status-badge status-${priority === 'HIGH' ? 'danger' : 'warning'}">${priority}</span></td>
+                        <td>
+                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveReplenishment('${item.sku}')">核准</button>
+                        </td>
                     </tr>
-                `).join('');
-            }
+                `;
+            }).join('');
         }
         
-        // 載入補單建議
-        function loadReplenishment() {
-            console.log('Loading replenishment...');
-            // showLoading();
-            // fetch(`${GAS_URL}?action=getReplenishment`)
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         updateReplenishmentTable(data);
-            //         hideLoading();
-            //     })
-            //     .catch(error => {
-            //         console.error('Error:', error);
-            //         hideLoading();
-            //     });
+        function selectAllReplenishments() {
+            const selectAll = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.replenishment-check').forEach(cb => {
+                cb.checked = selectAll;
+            });
         }
         
-        // 更新補單表格
-        function updateReplenishmentTable(data) {
-            if (!data || !data.suggestions) return;
+        function approveReplenishment(sku) {
+            callAPI('approveReplenishment', { skus: [sku] })
+                .then(result => {
+                    alert('補單已核准！');
+                    loadReplenishments();
+                })
+                .catch(error => {
+                    alert('核准失敗: ' + error.message);
+                });
+        }
+        
+        function approveAllSuggestions() {
+            const selected = [];
+            document.querySelectorAll('.replenishment-check:checked').forEach(cb => {
+                selected.push(cb.value);
+            });
             
-            const tbody = document.getElementById('replenishmentList');
-            if (tbody) {
-                tbody.innerHTML = data.suggestions.map((item, index) => `
-                    <tr>
-                        <td><input type="checkbox" value="${item.sku}"></td>
-                        <td>${item.name}</td>
-                        <td>${item.suggestedQty}</td>
-                        <td>${item.arrivalDate ? new Date(item.arrivalDate).toLocaleDateString() : ''}</td>
-                        <td>${item.supplier}</td>
-                        <td><span class="status-badge status-${item.status === 'HIGH' ? 'danger' : 'warning'}">${item.status}</span></td>
-                        <td><button class="btn btn-primary" style="padding: 5px 15px;">詳情</button></td>
-                    </tr>
-                `).join('');
+            if (selected.length === 0) {
+                alert('請選擇要核准的項目');
+                return;
             }
+            
+            callAPI('approveReplenishment', { skus: selected })
+                .then(result => {
+                    alert(`已核准 ${selected.length} 筆補單`);
+                    loadReplenishments();
+                })
+                .catch(error => {
+                    alert('核准失敗: ' + error.message);
+                });
         }
         
-        // 執行AI預測
-        function runAIPrediction() {
-            if (USE_MOCK_DATA) {
-                showModal('AI預測完成', `
-                    <p>預測執行成功！</p>
-                    <p>處理品項數: 25</p>
-                    <p>預測準確度: 96.5%</p>
-                `);
+        // === 倉容監控功能 ===
+        function loadCapacity() {
+            callAPI('getCapacity')
+                .then(data => {
+                    systemData.capacity = data;
+                    displayCapacity();
+                })
+                .catch(error => {
+                    console.error('Capacity error:', error);
+                });
+        }
+        
+        function displayCapacity() {
+            // 顯示冷凍庫
+            const freezerContainer = document.getElementById('freezerCapacity');
+            freezerContainer.innerHTML = (systemData.capacity.freezers || []).map((wh, index) => `
+                <div class="card">
+                    <div class="card-title">冷凍庫 #${index + 1}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${wh.usageRate}%; background: ${wh.usageRate > 85 ? '#f44336' : ''}">${wh.usageRate}%</div>
+                    </div>
+                    <div class="kpi-label">${wh.usedPallets}/${wh.totalPallets} 棧板位</div>
+                </div>
+            `).join('');
+            
+            // 顯示冷藏庫
+            const coolerContainer = document.getElementById('coolerCapacity');
+            coolerContainer.innerHTML = (systemData.capacity.coolers || []).map((wh, index) => `
+                <div class="card">
+                    <div class="card-title">冷藏庫 #${index + 1}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${wh.usageRate}%; background: ${wh.usageRate > 85 ? '#f44336' : ''}">${wh.usageRate}%</div>
+                    </div>
+                    <div class="kpi-label">${wh.usedPallets}/${wh.totalPallets} 棧板位</div>
+                </div>
+            `).join('');
+        }
+        
+        // === 系統設定功能 ===
+        function testConnection() {
+            const url = document.getElementById('webAppUrl').value;
+            if (!url) {
+                alert('請輸入 Web App URL');
                 return;
             }
             
             showLoading();
-            fetch(`${GAS_URL}?action=runPrediction`, {
-                method: 'POST'
-            })
+            fetch(`${url}?action=ping`)
                 .then(response => response.json())
                 .then(data => {
                     hideLoading();
-                    showModal('AI預測完成', `
-                        <p>預測執行成功！</p>
-                        <p>處理品項數: ${data.itemCount || 0}</p>
-                        <p>預測準確度: ${data.accuracy || 0}%</p>
+                    alert('連接成功！');
+                })
+                .catch(error => {
+                    hideLoading();
+                    alert('連接失敗: ' + error.message);
+                });
+        }
+        
+        function saveConnection() {
+            const url = document.getElementById('webAppUrl').value;
+            if (!url) {
+                alert('請輸入 Web App URL');
+                return;
+            }
+            
+            localStorage.setItem('GAS_URL', url);
+            GAS_URL = url;
+            alert('設定已儲存！');
+            checkConnection();
+        }
+        
+        function saveSystemSettings() {
+            const settings = {
+                reviewPeriod: document.getElementById('reviewPeriod').value,
+                defaultLeadTime: document.getElementById('defaultLeadTime').value,
+                capacityAlert: document.getElementById('capacityAlert').value
+            };
+            
+            callAPI('saveSettings', settings)
+                .then(result => {
+                    alert('系統參數已儲存！');
+                })
+                .catch(error => {
+                    alert('儲存失敗: ' + error.message);
+                });
+        }
+        
+        function initializeSystem() {
+            if (!confirm('確定要初始化系統？這將建立所有必要的工作表結構。')) {
+                return;
+            }
+            
+            callAPI('initializeSystem')
+                .then(result => {
+                    alert('系統初始化完成！');
+                    refreshDashboard();
+                })
+                .catch(error => {
+                    alert('初始化失敗: ' + error.message);
+                });
+        }
+        
+        function resetSystem() {
+            if (!confirm('確定要重置系統？這將清除所有資料！')) {
+                return;
+            }
+            
+            if (!confirm('再次確認：這將永久刪除所有資料，確定要繼續？')) {
+                return;
+            }
+            
+            callAPI('resetSystem')
+                .then(result => {
+                    alert('系統已重置！');
+                    refreshDashboard();
+                })
+                .catch(error => {
+                    alert('重置失敗: ' + error.message);
+                });
+        }
+        
+        // === 輔助功能 ===
+        function runFullAnalysis() {
+            showModal('執行完整分析', '<p>正在執行完整分析流程...</p>');
+            
+            Promise.all([
+                callAPI('runPrediction', { period: 30 }),
+                callAPI('generateReplenishment'),
+                callAPI('analyzeCapacity')
+            ])
+                .then(results => {
+                    closeModal();
+                    showModal('分析完成', `
+                        <p><strong>分析結果：</strong></p>
+                        <p>✅ 需求預測完成：${results[0].itemCount || 0} 個品項</p>
+                        <p>✅ 補單建議產生：${results[1].count || 0} 筆</p>
+                        <p>✅ 倉容分析完成</p>
+                        <button class="btn btn-primary" onclick="closeModal()">確定</button>
                     `);
+                    refreshDashboard();
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    hideLoading();
-                    alert('預測執行失敗');
+                    closeModal();
+                    alert('分析失敗: ' + error.message);
                 });
         }
         
-        // 產生補單建議
-        function generateReplenishment() {
-            if (USE_MOCK_DATA) {
-                showModal('補單建議已產生', `
-                    <p>已產生 5 筆補單建議</p>
-                    <p>總金額: NT$ 2,500,000</p>
-                    <button class="btn btn-primary" onclick="switchTab('replenishment')">查看補單</button>
-                `);
-                return;
-            }
-            
-            showLoading();
-            fetch(`${GAS_URL}?action=generateReplenishment`, {
-                method: 'POST'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading();
-                    showModal('補單建議已產生', `
-                        <p>已產生 ${data.count || 0} 筆補單建議</p>
-                        <p>總金額: NT$ ${data.totalAmount || 0}</p>
-                        <button class="btn btn-primary" onclick="switchTab('replenishment')">查看補單</button>
-                    `);
+        function generateAllSuggestions() {
+            callAPI('generateAllSuggestions')
+                .then(result => {
+                    alert('所有建議已產生！');
+                    refreshDashboard();
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    hideLoading();
+                    alert('產生建議失敗: ' + error.message);
                 });
         }
         
-        // 同步 Google Sheet
-        function syncGoogleSheet() {
-            if (USE_MOCK_DATA) {
-                alert('同步完成！(模擬模式)');
-                return;
-            }
-            
-            showLoading();
-            fetch(`${GAS_URL}?action=syncSheet`, {
-                method: 'POST'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading();
-                    alert('同步完成！');
+        function exportDashboard() {
+            callAPI('exportDashboard')
+                .then(result => {
+                    alert('儀表板已匯出至 Google Sheet！');
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    hideLoading();
+                    alert('匯出失敗: ' + error.message);
                 });
-        }
-        
-        // 確認客戶需求
-        function confirmCustomerDemand() {
-            const customer = document.getElementById('customerSelect').value;
-            const serviceLevel = document.getElementById('serviceLevel').value;
-            
-            if (!customer) {
-                alert('請選擇客戶');
-                return;
-            }
-            
-            showLoading();
-            fetch(`${GAS_URL}?action=confirmDemand`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    customer: customer,
-                    serviceLevel: serviceLevel
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading();
-                    alert('需求已確認！');
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    hideLoading();
-                });
-        }
-        
-        // 其他輔助函數
-        function exportReport() {
-            alert('報表匯出功能開發中...');
-        }
-        
-        function downloadTemplate() {
-            alert('範本下載功能開發中...');
-        }
-        
-        function runPrediction() {
-            runAIPrediction();
-        }
-        
-        function approveSelected() {
-            alert('核准功能開發中...');
         }
         
         function exportReplenishment() {
-            alert('補單匯出功能開發中...');
+            callAPI('exportReplenishment')
+                .then(result => {
+                    alert('補單已匯出至 Google Sheet！');
+                })
+                .catch(error => {
+                    alert('匯出失敗: ' + error.message);
+                });
         }
         
-        function generateReport() {
-            alert('報表產生功能開發中...');
+        function editCell(cell, sku, field) {
+            const currentValue = cell.textContent;
+            cell.innerHTML = `<input type="number" value="${currentValue}" onblur="saveCell(this, '${sku}', '${field}')" onkeypress="if(event.keyCode==13) this.blur()">`;
+            cell.querySelector('input').focus();
         }
         
-        function scheduleReport() {
-            alert('排程設定功能開發中...');
+        function saveCell(input, sku, field) {
+            const newValue = input.value;
+            const cell = input.parentElement;
+            cell.textContent = newValue;
+            
+            // 更新到後端
+            callAPI('updateInventoryField', {
+                sku: sku,
+                field: field,
+                value: newValue
+            }).catch(error => {
+                console.error('Update failed:', error);
+                cell.textContent = input.defaultValue;
+            });
         }
         
-        function saveSettings() {
-            alert('設定已儲存！');
+        function updateInventoryItem(sku) {
+            const item = systemData.inventory.find(i => i.sku === sku);
+            if (item) {
+                callAPI('updateInventory', item)
+                    .then(result => {
+                        alert('更新成功！');
+                        refreshInventory();
+                    })
+                    .catch(error => {
+                        alert('更新失敗: ' + error.message);
+                    });
+            }
         }
         
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('系統初始化...');
-            loadDashboard();
-        });
+        function deleteInventoryItem(sku) {
+            if (!confirm(`確定要刪除 ${sku} 嗎？`)) {
+                return;
+            }
+            
+            callAPI('deleteInventory', { sku: sku })
+                .then(result => {
+                    alert('刪除成功！');
+                    refreshInventory();
+                })
+                .catch(error => {
+                    alert('刪除失敗: ' + error.message);
+                });
+        }
+        
+        function deleteDemand(sku) {
+            if (!confirm(`確定要刪除 ${sku} 的需求設定嗎？`)) {
+                return;
+            }
+            
+            callAPI('deleteDemand', { sku: sku })
+                .then(result => {
+                    alert('刪除成功！');
+                    loadDemands();
+                })
+                .catch(error => {
+                    alert('刪除失敗: ' + error.message);
+                });
+        }
+        
+        function clearPending() {
+            if (!confirm('確定要清除所有待處理的補單？')) {
+                return;
+            }
+            
+            callAPI('clearPendingReplenishments')
+                .then(result => {
+                    alert('已清除待處理補單！');
+                    loadReplenishments();
+                })
+                .catch(error => {
+                    alert('清除失敗: ' + error.message);
+                });
+        }
+        
+        function viewHistory() {
+            showModal('歷史預測記錄', '<p>功能開發中...</p>');
+        }
     </script>
 </body>
 </html>
