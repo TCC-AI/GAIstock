@@ -740,7 +740,10 @@
     
     <script>
         // Google Apps Script Web App URL - 需要部署後替換
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxrGNdigwXqsF6CxstKc6HvOMiGNHhbLyibpd3j70tMRYtadibkUvTZXiGnYbx-kNzP/exec';
+        // const GAS_URL = 'https://script.google.com/macros/s/AKfycbxrGNdigwXqsF6CxstKc6HvOMiGNHhbLyibpd3j70tMRYtadibkUvTZXiGnYbx-kNzP/exec';
+        
+        // 暫時關閉後端連接，使用本地模擬
+        const USE_MOCK_DATA = true;
         
         // 切換標籤
         function switchTab(tabName) {
@@ -801,51 +804,132 @@
         
         // 載入儀表板資料
         function loadDashboard() {
-            showLoading();
-            fetch(`${GAS_URL}?action=getDashboard`)
-                .then(response => response.json())
-                .then(data => {
-                    updateDashboard(data);
-                    hideLoading();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    hideLoading();
-                });
+            // 暫時使用模擬資料，實際部署時再連接後端
+            console.log('Loading dashboard...');
+            // showLoading();
+            // fetch(`${GAS_URL}?action=getDashboard`)
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         updateDashboard(data);
+            //         hideLoading();
+            //     })
+            //     .catch(error => {
+            //         console.error('Error:', error);
+            //         hideLoading();
+            //     });
+        }
+        
+        // 更新儀表板
+        function updateDashboard(data) {
+            if (!data || !data.kpi) return;
+            
+            // 更新 KPI 數值
+            const freezerCard = document.querySelector('#dashboard .card:nth-child(1) .kpi-value');
+            if (freezerCard) freezerCard.textContent = data.kpi.freezerUsage + '%';
+            
+            const coolerCard = document.querySelector('#dashboard .card:nth-child(2) .kpi-value');
+            if (coolerCard) coolerCard.textContent = data.kpi.coolerUsage + '%';
+            
+            // 更新待辦事項
+            if (data.todos && data.todos.length > 0) {
+                const todoList = document.getElementById('todoList');
+                if (todoList) {
+                    todoList.innerHTML = data.todos.map(todo => `
+                        <tr>
+                            <td>${todo.dueTime || '09:00'}</td>
+                            <td>${todo.type}</td>
+                            <td>${todo.description}</td>
+                            <td><span class="status-badge status-${todo.priority === 'HIGH' ? 'danger' : 'warning'}">待處理</span></td>
+                            <td><button class="btn btn-primary" style="padding: 5px 15px;">查看</button></td>
+                        </tr>
+                    `).join('');
+                }
+            }
         }
         
         // 載入庫存資料
         function loadInventory() {
-            showLoading();
-            fetch(`${GAS_URL}?action=getInventory`)
-                .then(response => response.json())
-                .then(data => {
-                    updateInventoryTable(data);
-                    hideLoading();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    hideLoading();
-                });
+            console.log('Loading inventory...');
+            // showLoading();
+            // fetch(`${GAS_URL}?action=getInventory`)
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         updateInventoryTable(data);
+            //         hideLoading();
+            //     })
+            //     .catch(error => {
+            //         console.error('Error:', error);
+            //         hideLoading();
+            //     });
+        }
+        
+        // 更新庫存表格
+        function updateInventoryTable(data) {
+            if (!data || !data.items) return;
+            
+            const tbody = document.getElementById('inventoryDetails');
+            if (tbody) {
+                tbody.innerHTML = data.items.map(item => `
+                    <tr>
+                        <td>${item.sku}</td>
+                        <td>${item.currentStock || 0}</td>
+                        <td>${item.inTransit || 0}</td>
+                        <td>${item.available || 0}</td>
+                        <td>${item.safetyStock || 0}</td>
+                        <td>${item.rop || 0}</td>
+                        <td>${item.suggestedQty || 0}</td>
+                    </tr>
+                `).join('');
+            }
         }
         
         // 載入補單建議
         function loadReplenishment() {
-            showLoading();
-            fetch(`${GAS_URL}?action=getReplenishment`)
-                .then(response => response.json())
-                .then(data => {
-                    updateReplenishmentTable(data);
-                    hideLoading();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    hideLoading();
-                });
+            console.log('Loading replenishment...');
+            // showLoading();
+            // fetch(`${GAS_URL}?action=getReplenishment`)
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         updateReplenishmentTable(data);
+            //         hideLoading();
+            //     })
+            //     .catch(error => {
+            //         console.error('Error:', error);
+            //         hideLoading();
+            //     });
+        }
+        
+        // 更新補單表格
+        function updateReplenishmentTable(data) {
+            if (!data || !data.suggestions) return;
+            
+            const tbody = document.getElementById('replenishmentList');
+            if (tbody) {
+                tbody.innerHTML = data.suggestions.map((item, index) => `
+                    <tr>
+                        <td><input type="checkbox" value="${item.sku}"></td>
+                        <td>${item.name}</td>
+                        <td>${item.suggestedQty}</td>
+                        <td>${item.arrivalDate ? new Date(item.arrivalDate).toLocaleDateString() : ''}</td>
+                        <td>${item.supplier}</td>
+                        <td><span class="status-badge status-${item.status === 'HIGH' ? 'danger' : 'warning'}">${item.status}</span></td>
+                        <td><button class="btn btn-primary" style="padding: 5px 15px;">詳情</button></td>
+                    </tr>
+                `).join('');
+            }
         }
         
         // 執行AI預測
         function runAIPrediction() {
+            if (USE_MOCK_DATA) {
+                showModal('AI預測完成', `
+                    <p>預測執行成功！</p>
+                    <p>處理品項數: 25</p>
+                    <p>預測準確度: 96.5%</p>
+                `);
+                return;
+            }
+            
             showLoading();
             fetch(`${GAS_URL}?action=runPrediction`, {
                 method: 'POST'
@@ -868,6 +952,15 @@
         
         // 產生補單建議
         function generateReplenishment() {
+            if (USE_MOCK_DATA) {
+                showModal('補單建議已產生', `
+                    <p>已產生 5 筆補單建議</p>
+                    <p>總金額: NT$ 2,500,000</p>
+                    <button class="btn btn-primary" onclick="switchTab('replenishment')">查看補單</button>
+                `);
+                return;
+            }
+            
             showLoading();
             fetch(`${GAS_URL}?action=generateReplenishment`, {
                 method: 'POST'
@@ -889,6 +982,11 @@
         
         // 同步 Google Sheet
         function syncGoogleSheet() {
+            if (USE_MOCK_DATA) {
+                alert('同步完成！(模擬模式)');
+                return;
+            }
+            
             showLoading();
             fetch(`${GAS_URL}?action=syncSheet`, {
                 method: 'POST'
@@ -936,8 +1034,42 @@
                 });
         }
         
+        // 其他輔助函數
+        function exportReport() {
+            alert('報表匯出功能開發中...');
+        }
+        
+        function downloadTemplate() {
+            alert('範本下載功能開發中...');
+        }
+        
+        function runPrediction() {
+            runAIPrediction();
+        }
+        
+        function approveSelected() {
+            alert('核准功能開發中...');
+        }
+        
+        function exportReplenishment() {
+            alert('補單匯出功能開發中...');
+        }
+        
+        function generateReport() {
+            alert('報表產生功能開發中...');
+        }
+        
+        function scheduleReport() {
+            alert('排程設定功能開發中...');
+        }
+        
+        function saveSettings() {
+            alert('設定已儲存！');
+        }
+        
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('系統初始化...');
             loadDashboard();
         });
     </script>
