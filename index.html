@@ -609,7 +609,7 @@
         <div class="spinner"></div>
     </div>
     
-    <div class="container">
+    <div class="container" id="mainSystem">
         <div class="header">
             <h1>🏭 昶青物流GAI寄庫庫存量水位補單系統</h1>
             <p>智能化冷鏈倉儲管理平台 | 8座冷凍庫 · 5座冷藏庫</p>
@@ -981,26 +981,74 @@
         // 頁面載入時檢查登入狀態
         document.addEventListener('DOMContentLoaded', function() {
             console.log('系統啟動...');
+            // 載入儲存的設定
+    const savedUrl = localStorage.getItem('GAS_URL');
+    if (savedUrl) {
+        const webAppUrlElement = document.getElementById('webAppUrl');
+        if (webAppUrlElement) {
+            webAppUrlElement.value = savedUrl;
+        }
+        GAS_URL = savedUrl;
+    }
             
             // 檢查是否已登入
             const savedUser = sessionStorage.getItem('currentUser');
             const savedLevel = sessionStorage.getItem('userLevel');
             
             if (savedUser && savedLevel) {
-                currentUser = JSON.parse(savedUser);
-                userLevel = savedLevel;
-                showMainSystem();
-                initializeSystem();
-            } else {
-                showLoginForm();
-            }
+        currentUser = JSON.parse(savedUser);
+        userLevel = savedLevel;
+        showMainSystem();
+        // 檢查連接並載入主控台
+        checkConnection();
+        refreshDashboard();
+    } else {
+        showLoginForm();
+    }
         });
 
-        // 顯示登入表單
-        function showLoginForm() {
-            document.getElementById('loginContainer').style.display = 'flex';
-            document.getElementById('mainSystem').style.display = 'none';
-        }
+// 顯示登入表單
+function showLoginForm() {
+    const loginContainer = document.getElementById('loginContainer');
+    const mainSystem = document.getElementById('mainSystem');
+    
+    if (loginContainer) {
+        loginContainer.style.display = 'flex';
+    } else {
+        console.error('找不到 loginContainer 元素');
+    }
+    
+    if (mainSystem) {
+        mainSystem.style.display = 'none';
+    } else {
+        console.error('找不到 mainSystem 元素');
+    }
+}
+
+// 顯示主系統
+function showMainSystem() {
+    const loginContainer = document.getElementById('loginContainer');
+    const mainSystem = document.getElementById('mainSystem');
+    
+    if (loginContainer) {
+        loginContainer.style.display = 'none';
+    } else {
+        console.error('找不到 loginContainer 元素');
+    }
+    
+    if (mainSystem) {
+        mainSystem.style.display = 'flex';
+    } else {
+        console.error('找不到 mainSystem 元素');
+    }
+    
+    // 更新用戶資訊顯示
+    updateUserInfo();
+    
+    // 根據權限設定介面
+    applyPermissions();
+}
+
         // 系統狀態
         let systemData = {
             inventory: [],
@@ -1013,23 +1061,7 @@
             }
         };
         
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('系統啟動...');
-            
-            // 載入儲存的設定
-            const savedUrl = localStorage.getItem('GAS_URL');
-            if (savedUrl) {
-                document.getElementById('webAppUrl').value = savedUrl;
-                GAS_URL = savedUrl;
-            }
-            
-            // 檢查連接
-            checkConnection();
-            
-            // 載入主控台
-            refreshDashboard();
-        });
+
         
         // 檢查連接狀態
         function checkConnection() {
