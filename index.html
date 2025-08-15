@@ -64,13 +64,14 @@
         .status-indicator.error {
             background: #f44336;
         }
-        
-        .nav-tabs {
+         .nav-tabs {
             display: flex;
             background: #f8f9fa;
             border-bottom: 3px solid #667eea;
             overflow-x: auto;
+            flex-shrink: 0; /* 新增：防止壓縮 */
         }
+
         
         .nav-tab {
             padding: 15px 25px;
@@ -96,9 +97,12 @@
         }
         
         .content {
-            padding: 30px;
-            min-height: 500px;
+            padding: 20px 30px; /* 減少內距 */
+            flex: 1; /* 新增：佔滿剩餘空間 */
+            overflow-y: auto; /* 新增：內容過多時可捲動 */
+            min-height: 0; /* 新增：允許縮小 */
         }
+
         
         .tab-content {
             display: none;
