@@ -1681,6 +1681,119 @@ function showMainSystem() {
                     alert('重置失敗: ' + error.message);
                 });
         }
+        // 處理登入
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const account = document.getElementById('loginAccount').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!account || !password) {
+        alert('請輸入帳號和密碼！');
+        return;
+    }
+    
+    // 顯示載入中
+    showLoading();
+    
+    // 呼叫後端驗證
+    callAPI('login', {
+        account: account,
+        password: password
+    })
+    .then(result => {
+        if (result.success) {
+            // 登入成功
+            currentUser = {
+                account: account,
+                name: result.name || account
+            };
+            userLevel = result.level || 'operator';
+            
+            // 儲存到 sessionStorage
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            sessionStorage.setItem('userLevel', userLevel);
+            
+            // 顯示主系統
+            showMainSystem();
+            
+            // 檢查連接並載入主控台
+            checkConnection();
+            refreshDashboard();
+            
+        } else {
+            alert(result.message || '登入失敗！');
+        }
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        alert('登入過程發生錯誤，請稍後再試！');
+    });
+}
+
+// 更新用戶資訊顯示
+function updateUserInfo() {
+    // 在 header 中顯示用戶資訊
+    const header = document.querySelector('.header');
+    if (header && currentUser) {
+        // 檢查是否已有用戶資訊區塊
+        let userInfoDiv = header.querySelector('.user-info');
+        if (!userInfoDiv) {
+            userInfoDiv = document.createElement('div');
+            userInfoDiv.className = 'user-info';
+            header.appendChild(userInfoDiv);
+        }
+        
+        userInfoDiv.innerHTML = `
+            <span>歡迎，${currentUser.name} (${userLevel})</span>
+            <button class="logout-btn" onclick="logout()">登出</button>
+        `;
+    }
+}
+
+// 應用權限設定
+function applyPermissions() {
+    // 根據用戶等級設定介面權限
+    if (userLevel === 'operator') {
+        // 操作員只能查看，不能修改系統設定
+        const tabs = document.querySelectorAll('.nav-tab');
+        tabs.forEach(tab => {
+            if (tab.textContent.includes('系統設定')) {
+                tab.classList.add('disabled');
+            }
+        });
+        
+        // 禁用某些危險操作按鈕
+        const dangerButtons = document.querySelectorAll('.btn-danger');
+        dangerButtons.forEach(btn => {
+            if (btn.textContent.includes('刪除') || btn.textContent.includes('重置')) {
+                btn.classList.add('disabled');
+            }
+        });
+    }
+    
+    if (userLevel !== 'admin') {
+        // 非管理員無法重置系統
+        const resetButtons = document.querySelectorAll('button');
+        resetButtons.forEach(btn => {
+            if (btn.textContent.includes('重置系統')) {
+                btn.classList.add('disabled');
+            }
+        });
+    }
+}
+
+// 登出功能
+function logout() {
+    if (confirm('確定要登出嗎？')) {
+        sessionStorage.removeItem('currentUser');
+        sessionStorage.removeItem('userLevel');
+        currentUser = null;
+        userLevel = null;
+        showLoginForm();
+    }
+}
+
         
         // === 輔助功能 ===
         function runFullAnalysis() {
