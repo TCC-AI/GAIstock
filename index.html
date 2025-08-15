@@ -5,6 +5,169 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>昶青物流GAI寄庫庫存量水位補單系統</title>
     <style>
+        /* 登入介面樣式 */
+.login-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    padding: 0;
+    width: 400px;
+    max-width: 90vw;
+    overflow: hidden;
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+    position: relative;
+}
+
+.login-logo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 15px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 10px;
+}
+
+.login-header h2 {
+    margin: 0 0 5px 0;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.login-header p {
+    margin: 0;
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.login-body {
+    padding: 40px 30px 30px;
+}
+
+.login-body h3 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 1.3em;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1em;
+    border-radius: 10px;
+    margin-top: 20px;
+    background: linear-gradient(135deg, #00bcd4 0%, #26c6da 100%);
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 188, 212, 0.3);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+.login-footer {
+    background: #f8f9fa;
+    padding: 15px 30px;
+    text-align: center;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4caf50;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* 權限相關樣式 */
+.nav-tab.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.user-info {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 0.9em;
+}
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 15px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
         * {
             margin: 0;
             padding: 0;
@@ -412,6 +575,36 @@
     </style>
 </head>
 <body>
+    <!-- 登入介面 -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2NjdlZWEiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9IndoaXRlIj4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiPgo8cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTkgMTJoNm0tNiAwaDZtLTYgMGg2bS02IDBoNiIvPgo8L3N2Zz4KPC9zdmc+Cjwvc3ZnPg==" alt="Logo" class="login-logo">
+                <h2>昶青低溫物流</h2>
+                <p>CHANG CHING COLD CHAIN LOGISTICS</p>
+            </div>
+            <div class="login-body">
+                <h3>派車GAI數據管理系統</h3>
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>帳號</label>
+                        <input type="text" id="loginAccount" class="form-control" placeholder="請輸入帳號" required>
+                    </div>
+                    <div class="form-group">
+                        <label>密碼</label>
+                        <input type="password" id="loginPassword" class="form-control" placeholder="請輸入密碼" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary login-btn">登入</button>
+                </form>
+            </div>
+            <div class="login-footer">
+                <div class="connection-status" id="loginConnectionStatus">
+                    <span class="status-dot"></span>
+                    已連線
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="loading" id="loading">
         <div class="spinner"></div>
     </div>
@@ -779,9 +972,35 @@
     
     <script>
         // 系統配置
-        let GAS_URL = localStorage.getItem('https://script.google.com/macros/s/AKfycbycKOpgV2RkmHGivQfbndD-91a5Gheol65zoV3RzhsB5TyrDz4s77WAF5tVmOEhWa8U/exec') || '';
+        let GAS_URL = localStorage.getItem('https://script.google.com/macros/s/AKfycby6y73xPSWa520rWnGs49LpXH-ocNZ8Hx5r6K_JWLrD8BhnPze5pFBQQs28ZqEbNRM/exec') || '';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
-        
+         // 用戶會話管理
+        let currentUser = null;
+        let userLevel = null;
+
+        // 頁面載入時檢查登入狀態
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('系統啟動...');
+            
+            // 檢查是否已登入
+            const savedUser = sessionStorage.getItem('currentUser');
+            const savedLevel = sessionStorage.getItem('userLevel');
+            
+            if (savedUser && savedLevel) {
+                currentUser = JSON.parse(savedUser);
+                userLevel = savedLevel;
+                showMainSystem();
+                initializeSystem();
+            } else {
+                showLoginForm();
+            }
+        });
+
+        // 顯示登入表單
+        function showLoginForm() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('mainSystem').style.display = 'none';
+        }
         // 系統狀態
         let systemData = {
             inventory: [],
