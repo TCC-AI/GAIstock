@@ -972,40 +972,57 @@
     
     <script>
         // 系統配置
-        let GAS_URL = localStorage.getItem('https://script.google.com/macros/s/AKfycbxCE3loJ-JIspYk3TJJAA25xOI1eBz7uLBDeK-DIhS3fId_pCfAV-ExFTYOjPJXBOmX/exec') || '';
+       // 找到這行程式碼（大約在第 513 行）並替換為：
+let GAS_URL = localStorage.getItem('GAS_URL') || '';
+
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
          // 用戶會話管理
         let currentUser = null;
         let userLevel = null;
 
-        // 頁面載入時檢查登入狀態
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('系統啟動...');
-            // 載入儲存的設定
+// 頁面載入時檢查登入狀態
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('系統啟動...');
+    
+    // 載入儲存的 GAS URL 設定
     const savedUrl = localStorage.getItem('GAS_URL');
     if (savedUrl) {
-        const webAppUrlElement = document.getElementById('webAppUrl');
-        if (webAppUrlElement) {
-            webAppUrlElement.value = savedUrl;
-        }
         GAS_URL = savedUrl;
+        console.log('已載入 GAS URL:', savedUrl);
+        
+        // 同時更新設定頁面的輸入框
+        setTimeout(() => {
+            const webAppUrlElement = document.getElementById('webAppUrl');
+            if (webAppUrlElement) {
+                webAppUrlElement.value = savedUrl;
+            }
+        }, 100);
     }
+    
+    // 檢查是否已登入
+    const savedUser = sessionStorage.getItem('currentUser');
+    const savedLevel = sessionStorage.getItem('userLevel');
+    
+    if (savedUser && savedLevel && GAS_URL) {
+        try {
+            currentUser = JSON.parse(savedUser);
+            userLevel = savedLevel;
+            showMainSystem();
             
-            // 檢查是否已登入
-            const savedUser = sessionStorage.getItem('currentUser');
-            const savedLevel = sessionStorage.getItem('userLevel');
-            
-            if (savedUser && savedLevel) {
-        currentUser = JSON.parse(savedUser);
-        userLevel = savedLevel;
-        showMainSystem();
-        // 檢查連接並載入主控台
-        checkConnection();
-        refreshDashboard();
+            // 延遲載入資料，避免初始化錯誤
+            setTimeout(() => {
+                checkConnection();
+                refreshDashboard();
+            }, 500);
+        } catch (error) {
+            console.error('載入使用者資料失敗:', error);
+            showLoginForm();
+        }
     } else {
         showLoginForm();
     }
-        });
+});
+
 
 // 顯示登入表單
 function showLoginForm() {
@@ -1681,15 +1698,22 @@ function showMainSystem() {
                     alert('重置失敗: ' + error.message);
                 });
         }
-        // 處理登入
+// 處理登入
 function handleLogin(event) {
     event.preventDefault();
     
-    const account = document.getElementById('loginAccount').value;
-    const password = document.getElementById('loginPassword').value;
+    const account = document.getElementById('loginAccount').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
     
     if (!account || !password) {
         alert('請輸入帳號和密碼！');
+        return;
+    }
+    
+    // 檢查是否已設定 GAS_URL
+    if (!GAS_URL) {
+        alert('系統尚未設定 Google Apps Script URL\n\n請按以下步驟操作：\n1. 先部署您的 Google Apps Script\n2. 取得 Web App URL\n3. 在系統設定中輸入 URL');
+        showGASUrlSetup();
         return;
     }
     
@@ -1702,34 +1726,127 @@ function handleLogin(event) {
         password: password
     })
     .then(result => {
-        if (result.success) {
+        hideLoading(); // 確保隱藏載入畫面
+        
+        if (result && result.success) {
             // 登入成功
             currentUser = {
                 account: account,
-                name: result.name || account
+                name: result.user.name || account,
+                title: result.user.title || '',
+                level: result.user.level || 'operator'
             };
-            userLevel = result.level || 'operator';
+            userLevel = result.user.level || 'operator';
             
             // 儲存到 sessionStorage
             sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             sessionStorage.setItem('userLevel', userLevel);
             
+            // 更新最後登入時間（不等待結果）
+            callAPI('updateLastLogin', { account: account }).catch(err => {
+                console.log('更新登入時間失敗:', err);
+            });
+            
             // 顯示主系統
             showMainSystem();
             
             // 檢查連接並載入主控台
-            checkConnection();
-            refreshDashboard();
+            setTimeout(() => {
+                checkConnection();
+                refreshDashboard();
+            }, 100);
             
         } else {
-            alert(result.message || '登入失敗！');
+            alert(result.message || '登入失敗！請檢查帳號密碼');
         }
     })
     .catch(error => {
+        hideLoading(); // 確保隱藏載入畫面
         console.error('Login error:', error);
-        alert('登入過程發生錯誤，請稍後再試！');
+        
+        let errorMessage = '登入過程發生錯誤';
+        if (error.message) {
+            errorMessage += '：' + error.message;
+        }
+        if (error.message && error.message.includes('fetch')) {
+            errorMessage += '\n\n可能原因：\n1. Google Apps Script URL 設定錯誤\n2. 網路連線問題\n3. CORS 政策限制';
+        }
+        
+        alert(errorMessage);
     });
 }
+// 新增：顯示 GAS URL 設定提示
+function showGASUrlSetup() {
+    showModal('Google Apps Script 設定', `
+        <div style="margin-bottom: 20px;">
+            <p><strong>請先完成以下步驟：</strong></p>
+            <ol style="text-align: left; padding-left: 20px;">
+                <li>開啟您的 Google Apps Script 專案</li>
+                <li>點擊「部署」→「新增部署作業」</li>
+                <li>選擇類型：「網頁應用程式」</li>
+                <li>執行身分：選擇您的帳號</li>
+                <li>存取權限：「任何人」</li>
+                <li>複製產生的 Web App URL</li>
+            </ol>
+        </div>
+        <div class="form-group">
+            <label>Google Apps Script Web App URL</label>
+            <input type="text" class="form-control" id="setupGasUrl" placeholder="https://script.google.com/macros/s/...../exec">
+            <small style="color: #666;">URL 應該以 /exec 結尾</small>
+        </div>
+        <div style="margin-top: 20px;">
+            <button class="btn btn-primary" onclick="saveGasUrlFromSetup()">儲存並測試連接</button>
+            <button class="btn btn-secondary" onclick="closeModal()">稍後設定</button>
+        </div>
+    `);
+}
+
+// 新增：從設定對話框儲存 GAS URL
+function saveGasUrlFromSetup() {
+    const url = document.getElementById('setupGasUrl').value.trim();
+    if (!url) {
+        alert('請輸入 Google Apps Script Web App URL');
+        return;
+    }
+    
+    if (!url.includes('script.google.com') || !url.endsWith('/exec')) {
+        alert('URL 格式不正確\n\n正確格式應為：\nhttps://script.google.com/macros/s/.../exec');
+        return;
+    }
+    
+    // 儲存 URL
+    localStorage.setItem('GAS_URL', url);
+    GAS_URL = url;
+    
+    // 測試連接
+    showLoading();
+    fetch(`${url}?action=ping`)
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            closeModal();
+            alert('連接測試成功！\n\n現在可以進行登入了。\n\n預設帳號：\n- 管理員：admin / admin123\n- 操作員：operator / op123\n- CCC：CCC / CCC');
+        })
+// 找到 callAPI 函數中的 .catch 部分，替換為：
+.catch(error => {
+    hideLoading();
+    console.error('API Error:', error);
+    
+    // 改善錯誤訊息
+    let errorMessage = error.message || error.toString();
+    if (errorMessage.includes('Failed to fetch')) {
+        errorMessage = '無法連接到伺服器，請檢查網路連線或 Google Apps Script 設定';
+    }
+    
+    // 建立包含詳細資訊的錯誤物件
+    const detailedError = new Error(errorMessage);
+    detailedError.originalError = error;
+    
+    throw detailedError;
+});
+
+}
+
 
 // 更新用戶資訊顯示
 function updateUserInfo() {
