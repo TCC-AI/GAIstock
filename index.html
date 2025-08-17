@@ -137,14 +137,12 @@
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
-    background: #f5f5f5 !important;
 }
 
 .btn.disabled {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
-    background: #ccc !important;
 }
 
 .user-info {
@@ -170,21 +168,6 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* 權限訊息樣式 */
-.permission-message {
-    text-align: center;
-    padding: 40px 20px;
-    color: #666;
-    background: #f8f9fa;
-    border-radius: 10px;
-    margin: 20px;
-}
-
-.permission-message h3 {
-    color: #ff6b6b;
-    margin-bottom: 15px;
-}
-
         * {
             margin: 0;
             padding: 0;
@@ -196,30 +179,30 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 0;
-            margin: 0;
-            overflow: hidden;
+            margin: 0; /* 移除所有外距 */
+            overflow: hidden; /* 新增：防止捲軸出現 */
         }
         
         .container {
-            max-width: 100vw;
+            max-width: 100vw; /* 寬度填滿視窗 */
             width: 100%;
-            height: 100vh;
+            height: 100vh; /* 新增：高度填滿視窗 */
             margin: 0;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 0;
-            box-shadow: none;
+            border-radius: 0; /* 移除圓角 */
+            box-shadow: none; /* 移除陰影 */
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            display: flex; /* 新增：使用 flexbox */
+            flex-direction: column; /* 新增：垂直排列 */
         }
 
         
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px 30px;
+            padding: 20px 30px; /* 減少上下內距 */
             text-align: center;
-            flex-shrink: 0;
+            flex-shrink: 0; /* 新增：防止壓縮 */
         }
         
                 
@@ -249,7 +232,7 @@
             background: #f8f9fa;
             border-bottom: 3px solid #667eea;
             overflow-x: auto;
-            flex-shrink: 0;
+            flex-shrink: 0; /* 新增：防止壓縮 */
         }
 
         
@@ -264,7 +247,7 @@
             color: #333;
         }
         
-        .nav-tab:hover:not(.disabled) {
+        .nav-tab:hover {
             background: rgba(102, 126, 234, 0.1);
         }
         
@@ -277,10 +260,10 @@
         }
         
         .content {
-            padding: 20px 30px;
-            flex: 1;
-            overflow-y: auto;
-            min-height: 0;
+            padding: 20px 30px; /* 減少內距 */
+            flex: 1; /* 新增：佔滿剩餘空間 */
+            overflow-y: auto; /* 新增：內容過多時可捲動 */
+            min-height: 0; /* 新增：允許縮小 */
         }
 
         
@@ -390,7 +373,7 @@
             color: white;
         }
         
-        .btn-primary:hover:not(.disabled) {
+        .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
@@ -636,13 +619,13 @@
         </div>
         
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('dashboard')" data-permission="s1">📊 主控台</button>
-            <button class="nav-tab" onclick="switchTab('inventory')" data-permission="s2">📦 即時庫存</button>
-            <button class="nav-tab" onclick="switchTab('demand')" data-permission="s3">📈 需求設定</button>
-            <button class="nav-tab" onclick="switchTab('prediction')" data-permission="s3">🤖 AI預測分析</button>
-            <button class="nav-tab" onclick="switchTab('replenishment')" data-permission="s3">📝 補單管理</button>
-            <button class="nav-tab" onclick="switchTab('capacity')" data-permission="s3">🏢 倉容監控</button>
-            <button class="nav-tab" onclick="switchTab('settings')" data-permission="s4">⚙️ 系統設定</button>
+            <button class="nav-tab active" onclick="switchTab('dashboard')">📊 主控台</button>
+            <button class="nav-tab" onclick="switchTab('inventory')">📦 即時庫存</button>
+            <button class="nav-tab" onclick="switchTab('demand')">📈 需求設定</button>
+            <button class="nav-tab" onclick="switchTab('prediction')">🤖 AI預測分析</button>
+            <button class="nav-tab" onclick="switchTab('replenishment')">📝 補單管理</button>
+            <button class="nav-tab" onclick="switchTab('capacity')">🏢 倉容監控</button>
+            <button class="nav-tab" onclick="switchTab('settings')">⚙️ 系統設定</button>
         </div>
         
         <div class="content">
@@ -650,7 +633,7 @@
             <div id="dashboard" class="tab-content active">
                 <h2>即時營運總覽</h2>
                 <div style="text-align: right; margin-bottom: 20px;">
-                    <button class="btn btn-warning" onclick="refreshDashboard()" data-permission="s2">🔄 重新整理</button>
+                    <button class="btn btn-warning" onclick="refreshDashboard()">🔄 重新整理</button>
                     <span style="margin-left: 10px; color: #666;" id="lastUpdate">最後更新: --</span>
                 </div>
                 
@@ -658,13 +641,11 @@
                     <!-- KPI 卡片將動態載入 -->
                 </div>
                 
-                <div id="dashboardActions" data-permission="s2">
-                    <h3>系統快速操作</h3>
-                    <div style="margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="runFullAnalysis()" data-permission="s3">🚀 執行完整分析流程</button>
-                        <button class="btn btn-success" onclick="generateAllSuggestions()" data-permission="s3">📋 產生所有建議</button>
-                        <button class="btn btn-secondary" onclick="exportDashboard()" data-permission="s2">📥 匯出儀表板</button>
-                    </div>
+                <h3>系統快速操作</h3>
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="runFullAnalysis()">🚀 執行完整分析流程</button>
+                    <button class="btn btn-success" onclick="generateAllSuggestions()">📋 產生所有建議</button>
+                    <button class="btn btn-secondary" onclick="exportDashboard()">📥 匯出儀表板</button>
                 </div>
                 
                 <h3 style="margin-top: 30px;">系統警報與通知</h3>
@@ -675,350 +656,302 @@
             
             <!-- 即時庫存 -->
             <div id="inventory" class="tab-content">
-                <div class="permission-message" id="inventoryPermissionMessage" style="display: none;">
-                    <h3>🔒 權限不足</h3>
-                    <p>您目前的權限等級無法訪問此功能</p>
-                    <p>如需使用此功能，請聯繫系統管理員提升權限</p>
+                <h2>即時庫存管理</h2>
+                
+                <div class="form-group">
+                    <div class="input-group">
+                        <div style="flex: 1;">
+                            <label>快速搜尋</label>
+                            <input type="text" class="form-control" id="inventorySearch" placeholder="輸入SKU或品名..." onkeyup="searchInventory()">
+                        </div>
+                        <div>
+                            <label>溫層篩選</label>
+                            <select class="form-control" id="tempFilter" onchange="filterInventory()">
+                                <option value="">全部</option>
+                                <option value="冷凍">冷凍 (-18°C)</option>
+                                <option value="冷藏">冷藏 (4°C)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="addNewInventory()">➕ 新增庫存</button>
+                        <button class="btn btn-success" onclick="refreshInventory()">🔄 重新整理</button>
+                    </div>
                 </div>
                 
-                <div id="inventoryContent">
-                    <h2>即時庫存管理</h2>
-                    
-                    <div class="form-group">
-                        <div class="input-group">
-                            <div style="flex: 1;">
-                                <label>快速搜尋</label>
-                                <input type="text" class="form-control" id="inventorySearch" placeholder="輸入SKU或品名..." onkeyup="searchInventory()">
-                            </div>
-                            <div>
-                                <label>溫層篩選</label>
-                                <select class="form-control" id="tempFilter" onchange="filterInventory()">
-                                    <option value="">全部</option>
-                                    <option value="冷凍">冷凍 (-18°C)</option>
-                                    <option value="冷藏">冷藏 (4°C)</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-primary" onclick="addNewInventory()">➕ 新增庫存</button>
-                            <button class="btn btn-success" onclick="refreshInventory()">🔄 重新整理</button>
-                        </div>
-                    </div>
-                    
-                    <div class="table-container">
-                        <table id="inventoryTable">
-                            <thead>
-                                <tr>
-                                    <th>SKU</th>
-                                    <th>品名</th>
-                                    <th>溫層</th>
-                                    <th>現有庫存</th>
-                                    <th>在途量</th>
-                                    <th>可用量</th>
-                                    <th>安全庫存</th>
-                                    <th>狀態</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventoryTableBody">
-                                <!-- 動態載入 -->
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="table-container">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>品名</th>
+                                <th>溫層</th>
+                                <th>現有庫存</th>
+                                <th>在途量</th>
+                                <th>可用量</th>
+                                <th>安全庫存</th>
+                                <th>狀態</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <!-- 動態載入 -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
             <!-- 需求設定 -->
             <div id="demand" class="tab-content">
-                <div class="permission-message" id="demandPermissionMessage" style="display: none;">
-                    <h3>🔒 權限不足</h3>
-                    <p>您目前的權限等級無法訪問此功能</p>
-                    <p>如需使用此功能，請聯繫系統管理員提升權限</p>
+                <h2>客戶需求與服務水準設定</h2>
+                
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-title">新增需求設定</div>
+                        <div class="form-group">
+                            <label>SKU代碼</label>
+                            <input type="text" class="form-control" id="demandSKU" placeholder="例: SKU001">
+                        </div>
+                        <div class="form-group">
+                            <label>品名</label>
+                            <input type="text" class="form-control" id="demandName" placeholder="例: 冷凍牛肉">
+                        </div>
+                        <div class="form-group">
+                            <label>客戶</label>
+                            <input type="text" class="form-control" id="demandCustomer" placeholder="例: 客戶A">
+                        </div>
+                        <div class="form-group">
+                            <label>服務水準</label>
+                            <select class="form-control" id="demandServiceLevel">
+                                <option value="P">P級 (99.5% - z=2.58)</option>
+                                <option value="Q" selected>Q級 (97.5% - z=1.96)</option>
+                                <option value="R">R級 (95% - z=1.645)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>平均日需求</label>
+                            <input type="number" class="form-control" id="demandDaily" placeholder="例: 100">
+                        </div>
+                        <div class="form-group">
+                            <label>交期(天)</label>
+                            <input type="number" class="form-control" id="demandLeadTime" value="7">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveDemand()">儲存需求設定</button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">服務水準說明</div>
+                        <table style="width: 100%;">
+                            <tr>
+                                <td><strong>P級</strong></td>
+                                <td>99.5% 服務水準</td>
+                                <td>z = 2.58</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Q級</strong></td>
+                                <td>97.5% 服務水準</td>
+                                <td>z = 1.96</td>
+                            </tr>
+                            <tr>
+                                <td><strong>R級</strong></td>
+                                <td>95% 服務水準</td>
+                                <td>z = 1.645</td>
+                            </tr>
+                        </table>
+                        
+                        <h4 style="margin-top: 20px;">計算公式</h4>
+                        <p><strong>安全庫存(SS)</strong> = z × σ_L</p>
+                        <p><strong>補貨點(ROP)</strong> = d̄ × LT + SS</p>
+                        <p><strong>目標庫存</strong> = d̄ × (LT + RP) + SS</p>
+                        <p style="font-size: 0.9em; color: #666;">
+                            其中：z=服務水準係數, σ_L=交期需求標準差, d̄=平均需求, LT=交期, RP=檢視週期
+                        </p>
+                    </div>
                 </div>
                 
-                <div id="demandContent">
-                    <h2>客戶需求與服務水準設定</h2>
-                    
-                    <div class="dashboard-grid">
-                        <div class="card">
-                            <div class="card-title">新增需求設定</div>
-                            <div class="form-group">
-                                <label>SKU代碼</label>
-                                <input type="text" class="form-control" id="demandSKU" placeholder="例: SKU001">
-                            </div>
-                            <div class="form-group">
-                                <label>品名</label>
-                                <input type="text" class="form-control" id="demandName" placeholder="例: 冷凍牛肉">
-                            </div>
-                            <div class="form-group">
-                                <label>客戶</label>
-                                <input type="text" class="form-control" id="demandCustomer" placeholder="例: 客戶A">
-                            </div>
-                            <div class="form-group">
-                                <label>服務水準</label>
-                                <select class="form-control" id="demandServiceLevel">
-                                    <option value="P">P級 (99.5% - z=2.58)</option>
-                                    <option value="Q" selected>Q級 (97.5% - z=1.96)</option>
-                                    <option value="R">R級 (95% - z=1.645)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>平均日需求</label>
-                                <input type="number" class="form-control" id="demandDaily" placeholder="例: 100">
-                            </div>
-                            <div class="form-group">
-                                <label>交期(天)</label>
-                                <input type="number" class="form-control" id="demandLeadTime" value="7">
-                            </div>
-                            <button class="btn btn-primary" onclick="saveDemand()">儲存需求設定</button>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-title">服務水準說明</div>
-                            <table style="width: 100%;">
-                                <tr>
-                                    <td><strong>P級</strong></td>
-                                    <td>99.5% 服務水準</td>
-                                    <td>z = 2.58</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Q級</strong></td>
-                                    <td>97.5% 服務水準</td>
-                                    <td>z = 1.96</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>R級</strong></td>
-                                    <td>95% 服務水準</td>
-                                    <td>z = 1.645</td>
-                                </tr>
-                            </table>
-                            
-                            <h4 style="margin-top: 20px;">計算公式</h4>
-                            <p><strong>安全庫存(SS)</strong> = z × σ_L</p>
-                            <p><strong>補貨點(ROP)</strong> = d̄ × LT + SS</p>
-                            <p><strong>目標庫存</strong> = d̄ × (LT + RP) + SS</p>
-                            <p style="font-size: 0.9em; color: #666;">
-                                其中：z=服務水準係數, σ_L=交期需求標準差, d̄=平均需求, LT=交期, RP=檢視週期
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <h3 style="margin-top: 30px;">已設定的需求清單</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>SKU</th>
-                                    <th>品名</th>
-                                    <th>客戶</th>
-                                    <th>服務水準</th>
-                                    <th>日需求</th>
-                                    <th>交期</th>
-                                    <th>安全庫存</th>
-                                    <th>補貨點</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="demandTableBody">
-                                <!-- 動態載入 -->
-                            </tbody>
-                        </table>
-                    </div>
+                <h3 style="margin-top: 30px;">已設定的需求清單</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>品名</th>
+                                <th>客戶</th>
+                                <th>服務水準</th>
+                                <th>日需求</th>
+                                <th>交期</th>
+                                <th>安全庫存</th>
+                                <th>補貨點</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="demandTableBody">
+                            <!-- 動態載入 -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
             <!-- AI預測分析 -->
             <div id="prediction" class="tab-content">
-                <div class="permission-message" id="predictionPermissionMessage" style="display: none;">
-                    <h3>🔒 權限不足</h3>
-                    <p>您目前的權限等級無法訪問此功能</p>
-                    <p>如需使用此功能，請聯繫系統管理員提升權限</p>
+                <h2>AI預測分析引擎</h2>
+                
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-title">預測參數設定</div>
+                        <div class="form-group">
+                            <label>預測期間</label>
+                            <select class="form-control" id="predictionPeriod">
+                                <option value="7">未來7天</option>
+                                <option value="14">未來14天</option>
+                                <option value="30" selected>未來30天</option>
+                                <option value="60">未來60天</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>預測方法</label>
+                            <select class="form-control" id="predictionMethod">
+                                <option value="MA">移動平均法</option>
+                                <option value="ES">指數平滑法</option>
+                                <option value="ARIMA">ARIMA模型</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>特殊因素考量</label>
+                            <div>
+                                <label><input type="checkbox" id="seasonalFactor"> 季節性因素</label><br>
+                                <label><input type="checkbox" id="promotionFactor"> 促銷活動</label><br>
+                                <label><input type="checkbox" id="weatherFactor"> 天氣影響</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="runPrediction()">🤖 執行預測</button>
+                        <button class="btn btn-secondary" onclick="viewHistory()">📊 查看歷史</button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">預測結果摘要</div>
+                        <div id="predictionSummary">
+                            <p>尚未執行預測...</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div id="predictionContent">
-                    <h2>AI預測分析引擎</h2>
-                    
-                    <div class="dashboard-grid">
-                        <div class="card">
-                            <div class="card-title">預測參數設定</div>
-                            <div class="form-group">
-                                <label>預測期間</label>
-                                <select class="form-control" id="predictionPeriod">
-                                    <option value="7">未來7天</option>
-                                    <option value="14">未來14天</option>
-                                    <option value="30" selected>未來30天</option>
-                                    <option value="60">未來60天</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>預測方法</label>
-                                <select class="form-control" id="predictionMethod">
-                                    <option value="MA">移動平均法</option>
-                                    <option value="ES">指數平滑法</option>
-                                    <option value="ARIMA">ARIMA模型</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>特殊因素考量</label>
-                                <div>
-                                    <label><input type="checkbox" id="seasonalFactor"> 季節性因素</label><br>
-                                    <label><input type="checkbox" id="promotionFactor"> 促銷活動</label><br>
-                                    <label><input type="checkbox" id="weatherFactor"> 天氣影響</label>
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" onclick="runPrediction()">🤖 執行預測</button>
-                            <button class="btn btn-secondary" onclick="viewHistory()">📊 查看歷史</button>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-title">預測結果摘要</div>
-                            <div id="predictionSummary">
-                                <p>尚未執行預測...</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <h3 style="margin-top: 30px;">預測結果詳情</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>SKU</th>
-                                    <th>品名</th>
-                                    <th>預測期間</th>
-                                    <th>預測需求</th>
-                                    <th>標準差</th>
-                                    <th>信賴區間</th>
-                                    <th>建議行動</th>
-                                </tr>
-                            </thead>
-                            <tbody id="predictionTableBody">
-                                <!-- 動態載入 -->
-                            </tbody>
-                        </table>
-                    </div>
+                <h3 style="margin-top: 30px;">預測結果詳情</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>品名</th>
+                                <th>預測期間</th>
+                                <th>預測需求</th>
+                                <th>標準差</th>
+                                <th>信賴區間</th>
+                                <th>建議行動</th>
+                            </tr>
+                        </thead>
+                        <tbody id="predictionTableBody">
+                            <!-- 動態載入 -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
             <!-- 補單管理 -->
             <div id="replenishment" class="tab-content">
-                <div class="permission-message" id="replenishmentPermissionMessage" style="display: none;">
-                    <h3>🔒 權限不足</h3>
-                    <p>您目前的權限等級無法訪問此功能</p>
-                    <p>如需使用此功能，請聯繫系統管理員提升權限</p>
+                <h2>智能補單管理</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="generateReplenishment()">🔄 產生補單建議</button>
+                    <button class="btn btn-success" onclick="approveAllSuggestions()">✅ 全部核准</button>
+                    <button class="btn btn-warning" onclick="exportReplenishment()">📥 匯出補單</button>
+                    <button class="btn btn-danger" onclick="clearPending()">🗑️ 清除待處理</button>
                 </div>
                 
-                <div id="replenishmentContent">
-                    <h2>智能補單管理</h2>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <button class="btn btn-primary" onclick="generateReplenishment()">🔄 產生補單建議</button>
-                        <button class="btn btn-success" onclick="approveAllSuggestions()">✅ 全部核准</button>
-                        <button class="btn btn-warning" onclick="exportReplenishment()">📥 匯出補單</button>
-                        <button class="btn btn-danger" onclick="clearPending()">🗑️ 清除待處理</button>
-                    </div>
-                    
-                    <h3>補單建議清單</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th><input type="checkbox" id="selectAll" onchange="selectAllReplenishments()"></th>
-                                    <th>SKU</th>
-                                    <th>品名</th>
-                                    <th>現有庫存</th>
-                                    <th>安全庫存</th>
-                                    <th>補貨點</th>
-                                    <th>建議補貨量</th>
-                                    <th>預計金額</th>
-                                    <th>優先級</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="replenishmentTableBody">
-                                <!-- 動態載入 -->
-                            </tbody>
-                        </table>
-                    </div>
+                <h3>補單建議清單</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll" onchange="selectAllReplenishments()"></th>
+                                <th>SKU</th>
+                                <th>品名</th>
+                                <th>現有庫存</th>
+                                <th>安全庫存</th>
+                                <th>補貨點</th>
+                                <th>建議補貨量</th>
+                                <th>預計金額</th>
+                                <th>優先級</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="replenishmentTableBody">
+                            <!-- 動態載入 -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
             <!-- 倉容監控 -->
             <div id="capacity" class="tab-content">
-                <div class="permission-message" id="capacityPermissionMessage" style="display: none;">
-                    <h3>🔒 權限不足</h3>
-                    <p>您目前的權限等級無法訪問此功能</p>
-                    <p>如需使用此功能，請聯繫系統管理員提升權限</p>
+                <h2>倉容即時監控</h2>
+                
+                <h3>❄️ 冷凍庫 (8座)</h3>
+                <div class="dashboard-grid" id="freezerCapacity">
+                    <!-- 動態載入 -->
                 </div>
                 
-                <div id="capacityContent">
-                    <h2>倉容即時監控</h2>
-                    
-                    <h3>❄️ 冷凍庫 (8座)</h3>
-                    <div class="dashboard-grid" id="freezerCapacity">
-                        <!-- 動態載入 -->
-                    </div>
-                    
-                    <h3 style="margin-top: 30px;">🧊 冷藏庫 (5座)</h3>
-                    <div class="dashboard-grid" id="coolerCapacity">
-                        <!-- 動態載入 -->
-                    </div>
-                    
-                    <h3 style="margin-top: 30px;">倉容分配建議</h3>
-                    <div id="capacityRecommendations">
-                        <!-- 動態載入 -->
-                    </div>
+                <h3 style="margin-top: 30px;">🧊 冷藏庫 (5座)</h3>
+                <div class="dashboard-grid" id="coolerCapacity">
+                    <!-- 動態載入 -->
+                </div>
+                
+                <h3 style="margin-top: 30px;">倉容分配建議</h3>
+                <div id="capacityRecommendations">
+                    <!-- 動態載入 -->
                 </div>
             </div>
             
             <!-- 系統設定 -->
             <div id="settings" class="tab-content">
-                <div class="permission-message" id="settingsPermissionMessage" style="display: none;">
-                    <h3>🔒 權限不足</h3>
-                    <p>您目前的權限等級無法訪問此功能</p>
-                    <p>只有管理員(s4)權限可以使用系統設定功能</p>
+                <h2>系統設定</h2>
+                
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-title">Google Sheet 連接設定</div>
+                        <div class="form-group">
+                            <label>Sheet ID</label>
+                            <input type="text" class="form-control" id="sheetId" value="1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Web App URL</label>
+                            <input type="text" class="form-control" id="webAppUrl" placeholder="輸入您的 Google Apps Script Web App URL">
+                        </div>
+                        <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
+                        <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">系統參數</div>
+                        <div class="form-group">
+                            <label>預設檢視週期(天)</label>
+                            <input type="number" class="form-control" id="reviewPeriod" value="7">
+                        </div>
+                        <div class="form-group">
+                            <label>預設交期(天)</label>
+                            <input type="number" class="form-control" id="defaultLeadTime" value="7">
+                        </div>
+                        <div class="form-group">
+                            <label>容量警戒線(%)</label>
+                            <input type="number" class="form-control" id="capacityAlert" value="85">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveSystemSettings()">儲存參數</button>
+                    </div>
                 </div>
                 
-                <div id="settingsContent">
-                    <h2>系統設定</h2>
-                    
-                    <div class="dashboard-grid">
-                        <div class="card">
-                            <div class="card-title">Google Sheet 連接設定</div>
-                            <div class="form-group">
-                                <label>Sheet ID</label>
-                                <input type="text" class="form-control" id="sheetId" value="1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbyFj4b8Gk96dT61eN0TcuOLbLNyR11P7wdeT1VelrJk1cc0VpL5pFcREr-7Ct6xcFyZ/exec">
-                            </div>
-                            <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
-                            <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-title">系統參數</div>
-                            <div class="form-group">
-                                <label>預設檢視週期(天)</label>
-                                <input type="number" class="form-control" id="reviewPeriod" value="7">
-                            </div>
-                            <div class="form-group">
-                                <label>預設交期(天)</label>
-                                <input type="number" class="form-control" id="defaultLeadTime" value="7">
-                            </div>
-                            <div class="form-group">
-                                <label>容量警戒線(%)</label>
-                                <input type="number" class="form-control" id="capacityAlert" value="85">
-                            </div>
-                            <button class="btn btn-primary" onclick="saveSystemSettings()">儲存參數</button>
-                        </div>
-                    </div>
-                    
-                    <h3 style="margin-top: 30px;">資料初始化</h3>
-                    <div class="card">
-                        <p>首次使用請執行初始化，將建立所有必要的工作表結構。</p>
-                        <button class="btn btn-warning" onclick="initializeSystem()">🚀 初始化系統</button>
-                        <button class="btn btn-danger" onclick="resetSystem()">⚠️ 重置系統（清除所有資料）</button>
-                    </div>
+                <h3 style="margin-top: 30px;">資料初始化</h3>
+                <div class="card">
+                    <p>首次使用請執行初始化，將建立所有必要的工作表結構。</p>
+                    <button class="btn btn-warning" onclick="initializeSystem()">🚀 初始化系統</button>
+                    <button class="btn btn-danger" onclick="resetSystem()">⚠️ 重置系統（清除所有資料）</button>
                 </div>
             </div>
         </div>
@@ -1039,257 +972,82 @@
     
     <script>
         // 系統配置
-        let GAS_URL = localStorage.getItem('https://script.google.com/macros/s/AKfycbyFj4b8Gk96dT61eN0TcuOLbLNyR11P7wdeT1VelrJk1cc0VpL5pFcREr-7Ct6xcFyZ/exec') || '';
+        let GAS_URL = localStorage.getItem('https://script.google.com/macros/s/AKfycbxcemyHwDxtGuygxImVdF02WCM6HUBLwNA2AC__Y4Ry8a_a8yrxAI4JYWC4qHV23iu6/exec') || '';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
-        
-        // 用戶會話管理
+         // 用戶會話管理
         let currentUser = null;
         let userLevel = null;
-        
-        // 權限配置
-        const PERMISSIONS = {
-            's1': ['dashboard'], // 只能看主控台，無法使用按鈕
-            's2': ['dashboard', 'inventory'], // 可使用主控台和即時庫存
-            's3': ['dashboard', 'inventory', 'demand', 'prediction', 'replenishment', 'capacity'], // 除系統設定外都可用
-            's4': ['dashboard', 'inventory', 'demand', 'prediction', 'replenishment', 'capacity', 'settings'] // 無限制
-        };
 
         // 頁面載入時檢查登入狀態
         document.addEventListener('DOMContentLoaded', function() {
             console.log('系統啟動...');
-            
             // 載入儲存的設定
-            const savedUrl = localStorage.getItem('GAS_URL');
-            if (savedUrl) {
-                const webAppUrlElement = document.getElementById('webAppUrl');
-                if (webAppUrlElement) {
-                    webAppUrlElement.value = savedUrl;
-                }
-                GAS_URL = savedUrl;
-            }
+    const savedUrl = localStorage.getItem('GAS_URL');
+    if (savedUrl) {
+        const webAppUrlElement = document.getElementById('webAppUrl');
+        if (webAppUrlElement) {
+            webAppUrlElement.value = savedUrl;
+        }
+        GAS_URL = savedUrl;
+    }
             
             // 檢查是否已登入
             const savedUser = sessionStorage.getItem('currentUser');
             const savedLevel = sessionStorage.getItem('userLevel');
             
             if (savedUser && savedLevel) {
-                currentUser = JSON.parse(savedUser);
-                userLevel = savedLevel;
-                showMainSystem();
-                checkConnection();
-                refreshDashboard();
-            } else {
-                showLoginForm();
-            }
+        currentUser = JSON.parse(savedUser);
+        userLevel = savedLevel;
+        showMainSystem();
+        // 檢查連接並載入主控台
+        checkConnection();
+        refreshDashboard();
+    } else {
+        showLoginForm();
+    }
         });
 
-        // 顯示登入表單
-        function showLoginForm() {
-            const loginContainer = document.getElementById('loginContainer');
-            const mainSystem = document.getElementById('mainSystem');
-            
-            if (loginContainer) {
-                loginContainer.style.display = 'flex';
-            }
-            
-            if (mainSystem) {
-                mainSystem.style.display = 'none';
-            }
-        }
+// 顯示登入表單
+function showLoginForm() {
+    const loginContainer = document.getElementById('loginContainer');
+    const mainSystem = document.getElementById('mainSystem');
+    
+    if (loginContainer) {
+        loginContainer.style.display = 'flex';
+    } else {
+        console.error('找不到 loginContainer 元素');
+    }
+    
+    if (mainSystem) {
+        mainSystem.style.display = 'none';
+    } else {
+        console.error('找不到 mainSystem 元素');
+    }
+}
 
-        // 顯示主系統
-        function showMainSystem() {
-            const loginContainer = document.getElementById('loginContainer');
-            const mainSystem = document.getElementById('mainSystem');
-            
-            if (loginContainer) {
-                loginContainer.style.display = 'none';
-            }
-            
-            if (mainSystem) {
-                mainSystem.style.display = 'flex';
-            }
-            
-            // 更新用戶資訊顯示
-            updateUserInfo();
-            
-            // 根據權限設定介面
-            applyPermissions();
-        }
-
-        // 處理登入
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const account = document.getElementById('loginAccount').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!account || !password) {
-                alert('請輸入帳號和密碼！');
-                return;
-            }
-            
-            showLoading();
-            
-            callAPI('login', {
-                account: account,
-                password: password
-            })
-            .then(result => {
-                if (result.success) {
-                    currentUser = {
-                        account: account,
-                        name: result.user.name || account,
-                        title: result.user.title || '',
-                        level: result.user.level || 's1'
-                    };
-                    userLevel = result.user.level || 's1';
-                    
-                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    sessionStorage.setItem('userLevel', userLevel);
-                    
-                    showMainSystem();
-                    checkConnection();
-                    refreshDashboard();
-                } else {
-                    alert(result.message || '登入失敗！');
-                }
-            })
-            .catch(error => {
-                console.error('Login error:', error);
-                alert('登入過程發生錯誤，請稍後再試！');
-            });
-        }
-
-        // 更新用戶資訊顯示
-        function updateUserInfo() {
-            const header = document.querySelector('.header');
-            if (header && currentUser) {
-                let userInfoDiv = header.querySelector('.user-info');
-                if (!userInfoDiv) {
-                    userInfoDiv = document.createElement('div');
-                    userInfoDiv.className = 'user-info';
-                    header.appendChild(userInfoDiv);
-                }
-                
-                const levelNames = {
-                    's1': '訪客',
-                    's2': '操作員',
-                    's3': '主管',
-                    's4': '管理員'
-                };
-                
-                userInfoDiv.innerHTML = `
-                    <span>歡迎，${currentUser.name} (${levelNames[userLevel] || userLevel})</span>
-                    <button class="logout-btn" onclick="logout()">登出</button>
-                `;
-            }
-        }
-
-        // 應用權限設定
-        function applyPermissions() {
-            if (!userLevel) return;
-            
-            const allowedTabs = PERMISSIONS[userLevel] || [];
-            
-            // 處理導航標籤
-            const allTabs = document.querySelectorAll('.nav-tab');
-            allTabs.forEach(tab => {
-                const tabFunction = tab.getAttribute('onclick');
-                if (tabFunction) {
-                    const tabName = tabFunction.match(/switchTab\('(\w+)'\)/)?.[1];
-                    if (tabName && !allowedTabs.includes(tabName)) {
-                        tab.classList.add('disabled');
-                        tab.onclick = function(e) {
-                            e.preventDefault();
-                            alert('權限不足，無法訪問此功能');
-                        };
-                    }
-                }
-            });
-            
-            // 處理各頁面的權限控制
-            allowedTabs.forEach(tabName => {
-                const contentDiv = document.getElementById(tabName + 'Content');
-                const permissionDiv = document.getElementById(tabName + 'PermissionMessage');
-                
-                if (contentDiv && permissionDiv) {
-                    contentDiv.style.display = 'block';
-                    permissionDiv.style.display = 'none';
-                }
-            });
-            
-            // 隱藏無權限的頁面內容
-            Object.keys(PERMISSIONS).forEach(level => {
-                PERMISSIONS[level].forEach(tabName => {
-                    if (!allowedTabs.includes(tabName)) {
-                        const contentDiv = document.getElementById(tabName + 'Content');
-                        const permissionDiv = document.getElementById(tabName + 'PermissionMessage');
-                        
-                        if (contentDiv && permissionDiv) {
-                            contentDiv.style.display = 'none';
-                            permissionDiv.style.display = 'block';
-                        }
-                    }
-                });
-            });
-            
-            // s1 用戶特殊處理：禁用所有按鈕
-            if (userLevel === 's1') {
-                disableAllButtons();
-            }
-            
-            // 處理按鈕權限
-            const buttonsWithPermission = document.querySelectorAll('[data-permission]');
-            buttonsWithPermission.forEach(button => {
-                const requiredLevel = button.getAttribute('data-permission');
-                const requiredLevels = ['s1', 's2', 's3', 's4'];
-                const currentLevelIndex = requiredLevels.indexOf(userLevel);
-                const requiredLevelIndex = requiredLevels.indexOf(requiredLevel);
-                
-                if (currentLevelIndex < requiredLevelIndex) {
-                    button.classList.add('disabled');
-                    button.onclick = function(e) {
-                        e.preventDefault();
-                        alert('權限不足，無法使用此功能');
-                    };
-                }
-            });
-        }
-
-        // 禁用所有按鈕（s1 專用）
-        function disableAllButtons() {
-            const allButtons = document.querySelectorAll('.btn');
-            allButtons.forEach(button => {
-                // 除了登出按鈕外都禁用
-                if (!button.classList.contains('logout-btn')) {
-                    button.classList.add('disabled');
-                    button.onclick = function(e) {
-                        e.preventDefault();
-                        alert('您目前的權限僅能查看，無法執行操作');
-                    };
-                }
-            });
-        }
-
-        // 登出功能
-        function logout() {
-            if (confirm('確定要登出嗎？')) {
-                sessionStorage.removeItem('currentUser');
-                sessionStorage.removeItem('userLevel');
-                currentUser = null;
-                userLevel = null;
-                showLoginForm();
-            }
-        }
-
-        // 檢查權限
-        function checkPermission(requiredLevel) {
-            const levels = ['s1', 's2', 's3', 's4'];
-            const currentIndex = levels.indexOf(userLevel);
-            const requiredIndex = levels.indexOf(requiredLevel);
-            return currentIndex >= requiredIndex;
-        }
+// 顯示主系統
+function showMainSystem() {
+    const loginContainer = document.getElementById('loginContainer');
+    const mainSystem = document.getElementById('mainSystem');
+    
+    if (loginContainer) {
+        loginContainer.style.display = 'none';
+    } else {
+        console.error('找不到 loginContainer 元素');
+    }
+    
+    if (mainSystem) {
+        mainSystem.style.display = 'flex';
+    } else {
+        console.error('找不到 mainSystem 元素');
+    }
+    
+    // 更新用戶資訊顯示
+    updateUserInfo();
+    
+    // 根據權限設定介面
+    applyPermissions();
+}
 
         // 系統狀態
         let systemData = {
@@ -1302,6 +1060,8 @@
                 coolers: []
             }
         };
+        
+
         
         // 檢查連接狀態
         function checkConnection() {
@@ -1328,12 +1088,6 @@
         
         // 切換標籤
         function switchTab(tabName) {
-            // 檢查權限
-            if (!PERMISSIONS[userLevel] || !PERMISSIONS[userLevel].includes(tabName)) {
-                alert('權限不足，無法訪問此功能');
-                return;
-            }
-            
             // 隱藏所有標籤內容
             const allTabs = document.querySelectorAll('.tab-content');
             allTabs.forEach(tab => tab.classList.remove('active'));
@@ -1359,29 +1113,19 @@
                     refreshDashboard();
                     break;
                 case 'inventory':
-                    if (checkPermission('s2')) {
-                        refreshInventory();
-                    }
+                    refreshInventory();
                     break;
                 case 'demand':
-                    if (checkPermission('s3')) {
-                        loadDemands();
-                    }
+                    loadDemands();
                     break;
                 case 'prediction':
-                    if (checkPermission('s3')) {
-                        loadPredictions();
-                    }
+                    loadPredictions();
                     break;
                 case 'replenishment':
-                    if (checkPermission('s3')) {
-                        loadReplenishments();
-                    }
+                    loadReplenishments();
                     break;
                 case 'capacity':
-                    if (checkPermission('s3')) {
-                        loadCapacity();
-                    }
+                    loadCapacity();
                     break;
             }
         }
@@ -1412,9 +1156,7 @@
         function callAPI(action, data = {}) {
             if (!GAS_URL) {
                 alert('請先設定 Google Apps Script Web App URL');
-                if (checkPermission('s4')) {
-                    switchTab('settings');
-                }
+                switchTab('settings');
                 return Promise.reject('No URL configured');
             }
             
@@ -1427,7 +1169,6 @@
                 },
                 body: JSON.stringify({
                     action: action,
-                    user: currentUser,
                     ...data
                 })
             };
@@ -1511,11 +1252,6 @@
         
         // === 庫存管理功能 ===
         function refreshInventory() {
-            if (!checkPermission('s2')) {
-                alert('權限不足');
-                return;
-            }
-            
             callAPI('getInventory')
                 .then(data => {
                     systemData.inventory = data.items || [];
@@ -1566,3 +1302,753 @@
                         <td>
                             <button class="btn btn-primary" style="padding: 5px 10px;" onclick="updateInventoryItem('${item.sku}')">更新</button>
                             <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteInventoryItem('${item.sku}')">刪除</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function searchInventory() {
+            displayInventory();
+        }
+        
+        function filterInventory() {
+            displayInventory();
+        }
+        
+        function addNewInventory() {
+            showModal('新增庫存', `
+                <div class="form-group">
+                    <label>SKU</label>
+                    <input type="text" class="form-control" id="newSKU">
+                </div>
+                <div class="form-group">
+                    <label>品名</label>
+                    <input type="text" class="form-control" id="newName">
+                </div>
+                <div class="form-group">
+                    <label>溫層</label>
+                    <select class="form-control" id="newTempZone">
+                        <option value="冷凍">冷凍 (-18°C)</option>
+                        <option value="冷藏">冷藏 (4°C)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>初始庫存</label>
+                    <input type="number" class="form-control" id="newStock" value="0">
+                </div>
+                <button class="btn btn-primary" onclick="saveNewInventory()">儲存</button>
+            `);
+        }
+        
+        function saveNewInventory() {
+            const data = {
+                sku: document.getElementById('newSKU').value,
+                name: document.getElementById('newName').value,
+                tempZone: document.getElementById('newTempZone').value,
+                currentStock: parseInt(document.getElementById('newStock').value) || 0
+            };
+            
+            callAPI('addInventory', data)
+                .then(result => {
+                    closeModal();
+                    refreshInventory();
+                    alert('庫存新增成功！');
+                })
+                .catch(error => {
+                    alert('新增失敗: ' + error.message);
+                });
+        }
+        
+        // === 需求設定功能 ===
+        function saveDemand() {
+            const data = {
+                sku: document.getElementById('demandSKU').value,
+                name: document.getElementById('demandName').value,
+                customer: document.getElementById('demandCustomer').value,
+                serviceLevel: document.getElementById('demandServiceLevel').value,
+                dailyDemand: parseFloat(document.getElementById('demandDaily').value) || 0,
+                leadTime: parseInt(document.getElementById('demandLeadTime').value) || 7
+            };
+            
+            if (!data.sku || !data.name) {
+                alert('請填寫 SKU 和品名');
+                return;
+            }
+            
+            callAPI('saveDemand', data)
+                .then(result => {
+                    alert('需求設定已儲存！');
+                    document.getElementById('demandSKU').value = '';
+                    document.getElementById('demandName').value = '';
+                    document.getElementById('demandDaily').value = '';
+                    loadDemands();
+                })
+                .catch(error => {
+                    alert('儲存失敗: ' + error.message);
+                });
+        }
+        
+        function loadDemands() {
+            callAPI('getDemands')
+                .then(data => {
+                    systemData.demands = data.demands || [];
+                    displayDemands();
+                })
+                .catch(error => {
+                    console.error('Demands error:', error);
+                });
+        }
+        
+        function displayDemands() {
+            const tbody = document.getElementById('demandTableBody');
+            
+            tbody.innerHTML = systemData.demands.map(demand => `
+                <tr>
+                    <td>${demand.sku}</td>
+                    <td>${demand.name}</td>
+                    <td>${demand.customer}</td>
+                    <td>${demand.serviceLevel}</td>
+                    <td>${demand.dailyDemand}</td>
+                    <td>${demand.leadTime}天</td>
+                    <td>${demand.safetyStock || 0}</td>
+                    <td>${demand.rop || 0}</td>
+                    <td>
+                        <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteDemand('${demand.sku}')">刪除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // === AI預測功能 ===
+        function runPrediction() {
+            const period = document.getElementById('predictionPeriod').value;
+            const method = document.getElementById('predictionMethod').value;
+            
+            callAPI('runPrediction', {
+                period: period,
+                method: method,
+                seasonal: document.getElementById('seasonalFactor').checked,
+                promotion: document.getElementById('promotionFactor').checked,
+                weather: document.getElementById('weatherFactor').checked
+            })
+                .then(result => {
+                    document.getElementById('predictionSummary').innerHTML = `
+                        <p><strong>預測完成！</strong></p>
+                        <p>處理品項數: ${result.itemCount || 0}</p>
+                        <p>預測期間: ${period}天</p>
+                        <p>平均準確度: ${result.accuracy || 95}%</p>
+                    `;
+                    loadPredictions();
+                })
+                .catch(error => {
+                    alert('預測失敗: ' + error.message);
+                });
+        }
+        
+        function loadPredictions() {
+            callAPI('getPredictions')
+                .then(data => {
+                    systemData.predictions = data.predictions || [];
+                    displayPredictions();
+                })
+                .catch(error => {
+                    console.error('Predictions error:', error);
+                });
+        }
+        
+        function displayPredictions() {
+            const tbody = document.getElementById('predictionTableBody');
+            
+            tbody.innerHTML = systemData.predictions.map(pred => `
+                <tr>
+                    <td>${pred.sku}</td>
+                    <td>${pred.name}</td>
+                    <td>${pred.period}天</td>
+                    <td>${pred.forecast}</td>
+                    <td>${pred.stdDev}</td>
+                    <td>${pred.confidenceInterval}</td>
+                    <td>${pred.action}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // === 補單管理功能 ===
+        function generateReplenishment() {
+            callAPI('generateReplenishment')
+                .then(result => {
+                    alert(`已產生 ${result.count || 0} 筆補單建議`);
+                    loadReplenishments();
+                })
+                .catch(error => {
+                    alert('產生補單失敗: ' + error.message);
+                });
+        }
+        
+        function loadReplenishments() {
+            callAPI('getReplenishments')
+                .then(data => {
+                    systemData.replenishments = data.suggestions || [];
+                    displayReplenishments();
+                })
+                .catch(error => {
+                    console.error('Replenishments error:', error);
+                });
+        }
+        
+        function displayReplenishments() {
+            const tbody = document.getElementById('replenishmentTableBody');
+            
+            tbody.innerHTML = systemData.replenishments.map((item, index) => {
+                const priority = item.priority || (item.currentStock < item.safetyStock ? 'HIGH' : 'MEDIUM');
+                
+                return `
+                    <tr>
+                        <td><input type="checkbox" value="${item.sku}" class="replenishment-check"></td>
+                        <td>${item.sku}</td>
+                        <td>${item.name}</td>
+                        <td>${item.currentStock || 0}</td>
+                        <td>${item.safetyStock || 0}</td>
+                        <td>${item.rop || 0}</td>
+                        <td>${item.suggestedQty || 0}</td>
+                        <td>NT$ ${(item.suggestedQty * 1000).toLocaleString()}</td>
+                        <td><span class="status-badge status-${priority === 'HIGH' ? 'danger' : 'warning'}">${priority}</span></td>
+                        <td>
+                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveReplenishment('${item.sku}')">核准</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function selectAllReplenishments() {
+            const selectAll = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.replenishment-check').forEach(cb => {
+                cb.checked = selectAll;
+            });
+        }
+        
+        function approveReplenishment(sku) {
+            callAPI('approveReplenishment', { skus: [sku] })
+                .then(result => {
+                    alert('補單已核准！');
+                    loadReplenishments();
+                })
+                .catch(error => {
+                    alert('核准失敗: ' + error.message);
+                });
+        }
+        
+        function approveAllSuggestions() {
+            const selected = [];
+            document.querySelectorAll('.replenishment-check:checked').forEach(cb => {
+                selected.push(cb.value);
+            });
+            
+            if (selected.length === 0) {
+                alert('請選擇要核准的項目');
+                return;
+            }
+            
+            callAPI('approveReplenishment', { skus: selected })
+                .then(result => {
+                    alert(`已核准 ${selected.length} 筆補單`);
+                    loadReplenishments();
+                })
+                .catch(error => {
+                    alert('核准失敗: ' + error.message);
+                });
+        }
+        
+// 在原有的 loadCapacity() 函數中加入除錯資訊
+function loadCapacity() {
+    console.log('開始載入倉容資料...');
+    
+    callAPI('getCapacity')
+        .then(data => {
+            console.log('倉容資料載入成功:', data);
+            systemData.capacity = data;
+            
+            // 檢查資料是否為空
+            if (!data.freezers || data.freezers.length === 0) {
+                console.warn('冷凍庫資料為空，嘗試初始化...');
+                // 自動初始化倉容資料
+                return callAPI('initializeSystem');
+            }
+            
+            displayCapacity();
+        })
+        .then(result => {
+            if (result) {
+                console.log('系統初始化完成，重新載入倉容資料');
+                return callAPI('getCapacity');
+            }
+        })
+        .then(data => {
+            if (data) {
+                systemData.capacity = data;
+                displayCapacity();
+            }
+        })
+        .catch(error => {
+            console.error('倉容資料載入失敗:', error);
+            
+            // 顯示錯誤訊息給使用者
+            const freezerContainer = document.getElementById('freezerCapacity');
+            const coolerContainer = document.getElementById('coolerCapacity');
+            
+            const errorMessage = `
+                <div class="card" style="background: #f8d7da; color: #721c24;">
+                    <div class="card-title">載入失敗</div>
+                    <p>無法載入倉容資料，請檢查：</p>
+                    <ul>
+                        <li>網路連線是否正常</li>
+                        <li>Google Apps Script 設定是否正確</li>
+                        <li>是否已執行系統初始化</li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>
+                    <button class="btn btn-secondary" onclick="loadCapacity()">重新載入</button>
+                </div>
+            `;
+            
+            if (freezerContainer) {
+                freezerContainer.innerHTML = errorMessage;
+            }
+            if (coolerContainer) {
+                coolerContainer.innerHTML = '<p>請先解決冷凍庫資料載入問題</p>';
+            }
+        });
+}
+
+// 改善 displayCapacity() 函數
+function displayCapacity() {
+    console.log('開始顯示倉容資料:', systemData.capacity);
+    
+    // 顯示冷凍庫
+    const freezerContainer = document.getElementById('freezerCapacity');
+    if (!freezerContainer) {
+        console.error('找不到 freezerCapacity 容器');
+        return;
+    }
+    
+    const freezers = systemData.capacity.freezers || [];
+    if (freezers.length === 0) {
+        freezerContainer.innerHTML = `
+            <div class="card">
+                <div class="card-title">無資料</div>
+                <p>尚未建立冷凍庫資料</p>
+                <button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>
+            </div>
+        `;
+    } else {
+        freezerContainer.innerHTML = freezers.map((wh, index) => `
+            <div class="card">
+                <div class="card-title">${wh.name || `冷凍庫 #${index + 1}`}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${wh.usageRate || 0}%; background: ${(wh.usageRate || 0) > 85 ? '#f44336' : '#667eea'}">${wh.usageRate || 0}%</div>
+                </div>
+                <div class="kpi-label">${wh.usedPallets || 0}/${wh.totalPallets || 0} 棧板位</div>
+                <small style="color: #666;">更新時間: ${wh.updateTime ? new Date(wh.updateTime).toLocaleString('zh-TW') : '未知'}</small>
+            </div>
+        `).join('');
+    }
+    
+    // 顯示冷藏庫
+    const coolerContainer = document.getElementById('coolerCapacity');
+    if (!coolerContainer) {
+        console.error('找不到 coolerCapacity 容器');
+        return;
+    }
+    
+    const coolers = systemData.capacity.coolers || [];
+    if (coolers.length === 0) {
+        coolerContainer.innerHTML = `
+            <div class="card">
+                <div class="card-title">無資料</div>
+                <p>尚未建立冷藏庫資料</p>
+                <button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>
+            </div>
+        `;
+    } else {
+        coolerContainer.innerHTML = coolers.map((wh, index) => `
+            <div class="card">
+                <div class="card-title">${wh.name || `冷藏庫 #${index + 1}`}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${wh.usageRate || 0}%; background: ${(wh.usageRate || 0) > 85 ? '#f44336' : '#667eea'}">${wh.usageRate || 0}%</div>
+                </div>
+                <div class="kpi-label">${wh.usedPallets || 0}/${wh.totalPallets || 0} 棧板位</div>
+                <small style="color: #666;">更新時間: ${wh.updateTime ? new Date(wh.updateTime).toLocaleString('zh-TW') : '未知'}</small>
+            </div>
+        `).join('');
+    }
+    
+    console.log('倉容資料顯示完成');
+}
+        
+        function displayCapacity() {
+            // 顯示冷凍庫
+            const freezerContainer = document.getElementById('freezerCapacity');
+            freezerContainer.innerHTML = (systemData.capacity.freezers || []).map((wh, index) => `
+                <div class="card">
+                    <div class="card-title">冷凍庫 #${index + 1}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${wh.usageRate}%; background: ${wh.usageRate > 85 ? '#f44336' : ''}">${wh.usageRate}%</div>
+                    </div>
+                    <div class="kpi-label">${wh.usedPallets}/${wh.totalPallets} 棧板位</div>
+                </div>
+            `).join('');
+            
+            // 顯示冷藏庫
+            const coolerContainer = document.getElementById('coolerCapacity');
+            coolerContainer.innerHTML = (systemData.capacity.coolers || []).map((wh, index) => `
+                <div class="card">
+                    <div class="card-title">冷藏庫 #${index + 1}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${wh.usageRate}%; background: ${wh.usageRate > 85 ? '#f44336' : ''}">${wh.usageRate}%</div>
+                    </div>
+                    <div class="kpi-label">${wh.usedPallets}/${wh.totalPallets} 棧板位</div>
+                </div>
+            `).join('');
+        }
+        
+        // === 系統設定功能 ===
+        function testConnection() {
+            const url = document.getElementById('webAppUrl').value;
+            if (!url) {
+                alert('請輸入 Web App URL');
+                return;
+            }
+            
+            showLoading();
+            fetch(`${url}?action=ping`)
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    alert('連接成功！');
+                })
+                .catch(error => {
+                    hideLoading();
+                    alert('連接失敗: ' + error.message);
+                });
+        }
+        
+        function saveConnection() {
+            const url = document.getElementById('webAppUrl').value;
+            if (!url) {
+                alert('請輸入 Web App URL');
+                return;
+            }
+            
+            localStorage.setItem('GAS_URL', url);
+            GAS_URL = url;
+            alert('設定已儲存！');
+            checkConnection();
+        }
+        
+        function saveSystemSettings() {
+            const settings = {
+                reviewPeriod: document.getElementById('reviewPeriod').value,
+                defaultLeadTime: document.getElementById('defaultLeadTime').value,
+                capacityAlert: document.getElementById('capacityAlert').value
+            };
+            
+            callAPI('saveSettings', settings)
+                .then(result => {
+                    alert('系統參數已儲存！');
+                })
+                .catch(error => {
+                    alert('儲存失敗: ' + error.message);
+                });
+        }
+        
+        function initializeSystem() {
+            if (!confirm('確定要初始化系統？這將建立所有必要的工作表結構。')) {
+                return;
+            }
+            
+            callAPI('initializeSystem')
+                .then(result => {
+                    alert('系統初始化完成！');
+                    refreshDashboard();
+                })
+                .catch(error => {
+                    alert('初始化失敗: ' + error.message);
+                });
+        }
+        
+        function resetSystem() {
+            if (!confirm('確定要重置系統？這將清除所有資料！')) {
+                return;
+            }
+            
+            if (!confirm('再次確認：這將永久刪除所有資料，確定要繼續？')) {
+                return;
+            }
+            
+            callAPI('resetSystem')
+                .then(result => {
+                    alert('系統已重置！');
+                    refreshDashboard();
+                })
+                .catch(error => {
+                    alert('重置失敗: ' + error.message);
+                });
+        }
+        // 處理登入
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const account = document.getElementById('loginAccount').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!account || !password) {
+        alert('請輸入帳號和密碼！');
+        return;
+    }
+    
+    // 顯示載入中
+    showLoading();
+    
+    // 呼叫後端驗證
+    callAPI('login', {
+        account: account,
+        password: password
+    })
+    .then(result => {
+        if (result.success) {
+            // 登入成功
+            currentUser = {
+                account: account,
+                name: result.name || account
+            };
+            userLevel = result.level || 'operator';
+            
+            // 儲存到 sessionStorage
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            sessionStorage.setItem('userLevel', userLevel);
+            
+            // 顯示主系統
+            showMainSystem();
+            
+            // 檢查連接並載入主控台
+            checkConnection();
+            refreshDashboard();
+            
+        } else {
+            alert(result.message || '登入失敗！');
+        }
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        alert('登入過程發生錯誤，請稍後再試！');
+    });
+}
+
+// 更新用戶資訊顯示
+function updateUserInfo() {
+    // 在 header 中顯示用戶資訊
+    const header = document.querySelector('.header');
+    if (header && currentUser) {
+        // 檢查是否已有用戶資訊區塊
+        let userInfoDiv = header.querySelector('.user-info');
+        if (!userInfoDiv) {
+            userInfoDiv = document.createElement('div');
+            userInfoDiv.className = 'user-info';
+            header.appendChild(userInfoDiv);
+        }
+        
+        userInfoDiv.innerHTML = `
+            <span>歡迎，${currentUser.name} (${userLevel})</span>
+            <button class="logout-btn" onclick="logout()">登出</button>
+        `;
+    }
+}
+
+// 應用權限設定
+function applyPermissions() {
+    // 根據用戶等級設定介面權限
+    if (userLevel === 'operator') {
+        // 操作員只能查看，不能修改系統設定
+        const tabs = document.querySelectorAll('.nav-tab');
+        tabs.forEach(tab => {
+            if (tab.textContent.includes('系統設定')) {
+                tab.classList.add('disabled');
+            }
+        });
+        
+        // 禁用某些危險操作按鈕
+        const dangerButtons = document.querySelectorAll('.btn-danger');
+        dangerButtons.forEach(btn => {
+            if (btn.textContent.includes('刪除') || btn.textContent.includes('重置')) {
+                btn.classList.add('disabled');
+            }
+        });
+    }
+    
+    if (userLevel !== 'admin') {
+        // 非管理員無法重置系統
+        const resetButtons = document.querySelectorAll('button');
+        resetButtons.forEach(btn => {
+            if (btn.textContent.includes('重置系統')) {
+                btn.classList.add('disabled');
+            }
+        });
+    }
+}
+
+// 登出功能
+function logout() {
+    if (confirm('確定要登出嗎？')) {
+        sessionStorage.removeItem('currentUser');
+        sessionStorage.removeItem('userLevel');
+        currentUser = null;
+        userLevel = null;
+        showLoginForm();
+    }
+}
+
+        
+        // === 輔助功能 ===
+        function runFullAnalysis() {
+            showModal('執行完整分析', '<p>正在執行完整分析流程...</p>');
+            
+            Promise.all([
+                callAPI('runPrediction', { period: 30 }),
+                callAPI('generateReplenishment'),
+                callAPI('analyzeCapacity')
+            ])
+                .then(results => {
+                    closeModal();
+                    showModal('分析完成', `
+                        <p><strong>分析結果：</strong></p>
+                        <p>✅ 需求預測完成：${results[0].itemCount || 0} 個品項</p>
+                        <p>✅ 補單建議產生：${results[1].count || 0} 筆</p>
+                        <p>✅ 倉容分析完成</p>
+                        <button class="btn btn-primary" onclick="closeModal()">確定</button>
+                    `);
+                    refreshDashboard();
+                })
+                .catch(error => {
+                    closeModal();
+                    alert('分析失敗: ' + error.message);
+                });
+        }
+        
+        function generateAllSuggestions() {
+            callAPI('generateAllSuggestions')
+                .then(result => {
+                    alert('所有建議已產生！');
+                    refreshDashboard();
+                })
+                .catch(error => {
+                    alert('產生建議失敗: ' + error.message);
+                });
+        }
+        
+        function exportDashboard() {
+            callAPI('exportDashboard')
+                .then(result => {
+                    alert('儀表板已匯出至 Google Sheet！');
+                })
+                .catch(error => {
+                    alert('匯出失敗: ' + error.message);
+                });
+        }
+        
+        function exportReplenishment() {
+            callAPI('exportReplenishment')
+                .then(result => {
+                    alert('補單已匯出至 Google Sheet！');
+                })
+                .catch(error => {
+                    alert('匯出失敗: ' + error.message);
+                });
+        }
+        
+        function editCell(cell, sku, field) {
+            const currentValue = cell.textContent;
+            cell.innerHTML = `<input type="number" value="${currentValue}" onblur="saveCell(this, '${sku}', '${field}')" onkeypress="if(event.keyCode==13) this.blur()">`;
+            cell.querySelector('input').focus();
+        }
+        
+        function saveCell(input, sku, field) {
+            const newValue = input.value;
+            const cell = input.parentElement;
+            cell.textContent = newValue;
+            
+            // 更新到後端
+            callAPI('updateInventoryField', {
+                sku: sku,
+                field: field,
+                value: newValue
+            }).catch(error => {
+                console.error('Update failed:', error);
+                cell.textContent = input.defaultValue;
+            });
+        }
+        
+        function updateInventoryItem(sku) {
+            const item = systemData.inventory.find(i => i.sku === sku);
+            if (item) {
+                callAPI('updateInventory', item)
+                    .then(result => {
+                        alert('更新成功！');
+                        refreshInventory();
+                    })
+                    .catch(error => {
+                        alert('更新失敗: ' + error.message);
+                    });
+            }
+        }
+        
+        function deleteInventoryItem(sku) {
+            if (!confirm(`確定要刪除 ${sku} 嗎？`)) {
+                return;
+            }
+            
+            callAPI('deleteInventory', { sku: sku })
+                .then(result => {
+                    alert('刪除成功！');
+                    refreshInventory();
+                })
+                .catch(error => {
+                    alert('刪除失敗: ' + error.message);
+                });
+        }
+        
+        function deleteDemand(sku) {
+            if (!confirm(`確定要刪除 ${sku} 的需求設定嗎？`)) {
+                return;
+            }
+            
+            callAPI('deleteDemand', { sku: sku })
+                .then(result => {
+                    alert('刪除成功！');
+                    loadDemands();
+                })
+                .catch(error => {
+                    alert('刪除失敗: ' + error.message);
+                });
+        }
+        
+        function clearPending() {
+            if (!confirm('確定要清除所有待處理的補單？')) {
+                return;
+            }
+            
+            callAPI('clearPendingReplenishments')
+                .then(result => {
+                    alert('已清除待處理補單！');
+                    loadReplenishments();
+                })
+                .catch(error => {
+                    alert('清除失敗: ' + error.message);
+                });
+        }
+        
+        function viewHistory() {
+            showModal('歷史預測記錄', '<p>功能開發中...</p>');
+        }
+    </script>
+</body>
+</html>
