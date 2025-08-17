@@ -73,13 +73,14 @@
 }
 
 .login-logo {
-    width: 480px;                  /* 增加寬度 */
+    max-width: 400px;             /* 設定最大寬度 */
+    height: auto;                 /* 自動調整高度保持比例 */
     margin-bottom: 15px;
-    border-radius: 10px;          /* 改為圓角矩形，或設為 0 完全移除圓角 */
-    
-    padding: 5px;                 /* 減少內邊距 */
-    object-fit: contain;          /* 確保圖片比例正確顯示 */
+    border-radius: 20px;             /* 完全移除圓角 */
+    background: none;             /* 移除背景 */
+    padding: 0;                   /* 移除內邊距 */
 }
+
 
 
 .login-header h2 {
