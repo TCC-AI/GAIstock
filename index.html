@@ -122,10 +122,14 @@
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(0, 188, 212, 0.3);
 }
-
-.login-btn:active {
+        .login-btn:active {
     transform: translateY(0);
+    background: linear-gradient(135deg, #0097a7 0%, #00acc1 100%); /* 按下時變成更深的藍綠色 */
+    box-shadow: 0 5px 10px rgba(0, 188, 212, 0.2);
+    transition: all 0.1s ease; /* 按下時的過渡效果更快 */
 }
+
+
 
 .login-footer {
     background: #f8f9fa;
