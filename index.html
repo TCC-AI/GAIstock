@@ -1560,17 +1560,130 @@ function showMainSystem() {
                 });
         }
         
-        // === 倉容監控功能 ===
-        function loadCapacity() {
-            callAPI('getCapacity')
-                .then(data => {
-                    systemData.capacity = data;
-                    displayCapacity();
-                })
-                .catch(error => {
-                    console.error('Capacity error:', error);
-                });
-        }
+// 在原有的 loadCapacity() 函數中加入除錯資訊
+function loadCapacity() {
+    console.log('開始載入倉容資料...');
+    
+    callAPI('getCapacity')
+        .then(data => {
+            console.log('倉容資料載入成功:', data);
+            systemData.capacity = data;
+            
+            // 檢查資料是否為空
+            if (!data.freezers || data.freezers.length === 0) {
+                console.warn('冷凍庫資料為空，嘗試初始化...');
+                // 自動初始化倉容資料
+                return callAPI('initializeSystem');
+            }
+            
+            displayCapacity();
+        })
+        .then(result => {
+            if (result) {
+                console.log('系統初始化完成，重新載入倉容資料');
+                return callAPI('getCapacity');
+            }
+        })
+        .then(data => {
+            if (data) {
+                systemData.capacity = data;
+                displayCapacity();
+            }
+        })
+        .catch(error => {
+            console.error('倉容資料載入失敗:', error);
+            
+            // 顯示錯誤訊息給使用者
+            const freezerContainer = document.getElementById('freezerCapacity');
+            const coolerContainer = document.getElementById('coolerCapacity');
+            
+            const errorMessage = `
+                <div class="card" style="background: #f8d7da; color: #721c24;">
+                    <div class="card-title">載入失敗</div>
+                    <p>無法載入倉容資料，請檢查：</p>
+                    <ul>
+                        <li>網路連線是否正常</li>
+                        <li>Google Apps Script 設定是否正確</li>
+                        <li>是否已執行系統初始化</li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>
+                    <button class="btn btn-secondary" onclick="loadCapacity()">重新載入</button>
+                </div>
+            `;
+            
+            if (freezerContainer) {
+                freezerContainer.innerHTML = errorMessage;
+            }
+            if (coolerContainer) {
+                coolerContainer.innerHTML = '<p>請先解決冷凍庫資料載入問題</p>';
+            }
+        });
+}
+
+// 改善 displayCapacity() 函數
+function displayCapacity() {
+    console.log('開始顯示倉容資料:', systemData.capacity);
+    
+    // 顯示冷凍庫
+    const freezerContainer = document.getElementById('freezerCapacity');
+    if (!freezerContainer) {
+        console.error('找不到 freezerCapacity 容器');
+        return;
+    }
+    
+    const freezers = systemData.capacity.freezers || [];
+    if (freezers.length === 0) {
+        freezerContainer.innerHTML = `
+            <div class="card">
+                <div class="card-title">無資料</div>
+                <p>尚未建立冷凍庫資料</p>
+                <button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>
+            </div>
+        `;
+    } else {
+        freezerContainer.innerHTML = freezers.map((wh, index) => `
+            <div class="card">
+                <div class="card-title">${wh.name || `冷凍庫 #${index + 1}`}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${wh.usageRate || 0}%; background: ${(wh.usageRate || 0) > 85 ? '#f44336' : '#667eea'}">${wh.usageRate || 0}%</div>
+                </div>
+                <div class="kpi-label">${wh.usedPallets || 0}/${wh.totalPallets || 0} 棧板位</div>
+                <small style="color: #666;">更新時間: ${wh.updateTime ? new Date(wh.updateTime).toLocaleString('zh-TW') : '未知'}</small>
+            </div>
+        `).join('');
+    }
+    
+    // 顯示冷藏庫
+    const coolerContainer = document.getElementById('coolerCapacity');
+    if (!coolerContainer) {
+        console.error('找不到 coolerCapacity 容器');
+        return;
+    }
+    
+    const coolers = systemData.capacity.coolers || [];
+    if (coolers.length === 0) {
+        coolerContainer.innerHTML = `
+            <div class="card">
+                <div class="card-title">無資料</div>
+                <p>尚未建立冷藏庫資料</p>
+                <button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>
+            </div>
+        `;
+    } else {
+        coolerContainer.innerHTML = coolers.map((wh, index) => `
+            <div class="card">
+                <div class="card-title">${wh.name || `冷藏庫 #${index + 1}`}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${wh.usageRate || 0}%; background: ${(wh.usageRate || 0) > 85 ? '#f44336' : '#667eea'}">${wh.usageRate || 0}%</div>
+                </div>
+                <div class="kpi-label">${wh.usedPallets || 0}/${wh.totalPallets || 0} 棧板位</div>
+                <small style="color: #666;">更新時間: ${wh.updateTime ? new Date(wh.updateTime).toLocaleString('zh-TW') : '未知'}</small>
+            </div>
+        `).join('');
+    }
+    
+    console.log('倉容資料顯示完成');
+}
         
         function displayCapacity() {
             // 顯示冷凍庫
