@@ -1069,7 +1069,7 @@
     
     <script>
         // 系統配置
-        let GAS_URL = localStorage.getItem('GAS_URL') || '';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbyD19fK0I8MUX5LTMXhZvs4DF0QX-y8Sz8IxEjZCcvvodLrAeqIt7IX2LBbpxQ16tlT/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
         // 用戶會話管理
@@ -1084,34 +1084,30 @@
             's4': ['dashboard', 'inventory', 'demand', 'prediction', 'replenishment', 'capacity', 'settings'] // 無限制
         };
 
-        // 頁面載入時檢查登入狀態
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('系統啟動...');
-            
-            // 載入儲存的設定
-            const savedUrl = localStorage.getItem('GAS_URL');
-            if (savedUrl) {
-                const webAppUrlElement = document.getElementById('webAppUrl');
-                if (webAppUrlElement) {
-                    webAppUrlElement.value = savedUrl;
-                }
-                GAS_URL = savedUrl;
-            }
-            
-            // 檢查是否已登入
-            const savedUser = sessionStorage.getItem('currentUser');
-            const savedLevel = sessionStorage.getItem('userLevel');
-            
-            if (savedUser && savedLevel) {
-                currentUser = JSON.parse(savedUser);
-                userLevel = savedLevel;
-                showMainSystem();
-                checkConnection();
-                refreshDashboard();
-            } else {
-                showLoginForm();
-            }
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('系統啟動...');
+    
+    // 設定系統設定頁面的 URL 顯示（僅供管理員查看）
+    const webAppUrlElement = document.getElementById('webAppUrl');
+    if (webAppUrlElement) {
+        webAppUrlElement.value = GAS_URL;
+    }
+    
+    // 檢查是否已登入
+    const savedUser = sessionStorage.getItem('currentUser');
+    const savedLevel = sessionStorage.getItem('userLevel');
+    
+    if (savedUser && savedLevel) {
+        currentUser = JSON.parse(savedUser);
+        userLevel = savedLevel;
+        showMainSystem();
+        checkConnection();
+        refreshDashboard();
+    } else {
+        showLoginForm();
+    }
+});
+
 
         // 顯示登入表單
         function showLoginForm() {
@@ -1440,11 +1436,8 @@
         
         // API 呼叫函數
         function callAPI(action, data = {}) {
-            if (!GAS_URL) {
-                alert('請先設定 Google Apps Script Web App URL');
-                if (checkPermission('s4')) {
-                    switchTab('settings');
-                }
+             if (!GAS_URL) {
+        alert('系統配置錯誤，請聯繫系統管理員');
                 return Promise.reject('No URL configured');
             }
             
@@ -2019,31 +2012,47 @@
             console.log('倉容資料顯示完成');
         }
         
-        // === 系統設定功能 ===
-        function testConnection() {
-            if (!checkPermission('s4')) {
-                alert('權限不足，只有管理員可以修改系統設定');
-                return;
-            }
-            
-            const url = document.getElementById('webAppUrl').value;
-            if (!url) {
-                alert('請輸入 Web App URL');
-                return;
-            }
-            
-            showLoading();
-            fetch(`${url}?action=ping`)
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading();
-                    alert('連接成功！');
-                })
-                .catch(error => {
-                    hideLoading();
-                    alert('連接失敗: ' + error.message);
-                });
-        }
+function testConnection() {
+    if (!checkPermission('s4')) {
+        alert('權限不足，只有管理員可以修改系統設定');
+        return;
+    }
+    
+    showLoading();
+    fetch(`${GAS_URL}?action=ping`)
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            alert('連接成功！');
+        })
+        .catch(error => {
+            hideLoading();
+            alert('連接失敗: ' + error.message);
+        });
+}
+
+function saveConnection() {
+    if (!checkPermission('s4')) {
+        alert('權限不足，只有管理員可以修改系統設定');
+        return;
+    }
+    
+    const url = document.getElementById('webAppUrl').value;
+    if (!url) {
+        alert('請輸入 Web App URL');
+        return;
+    }
+    
+    // 只更新顯示，不實際改變系統 URL（除非您希望允許管理員動態修改）
+    alert('URL 顯示已更新！注意：實際系統 URL 需要在程式碼中修改');
+    
+    // 如果您希望允許管理員動態修改 URL，可以加上：
+    // GAS_URL = url;
+    // localStorage.setItem('GAS_URL', url);
+    
+    checkConnection();
+}
+
         
         function saveConnection() {
             if (!checkPermission('s4')) {
