@@ -1929,15 +1929,21 @@ function filterByShipDate(items, filterType) {
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 return isSameDay(shipDate, tomorrow);
                 
-case 'week':
-    const weekStart = new Date(today);
-    weekStart.setDate(weekStart.getDate() - 6); // 往前推6天
-    weekStart.setHours(0, 0, 0, 0);
-    
-    const weekEnd = new Date(today);
-    weekEnd.setHours(23, 59, 59, 999);
-    
-    return shipDate >= weekStart && shipDate <= weekEnd;
+                case 'week':
+                    // 找到本週一
+                    const weekStart = new Date(today);
+                    const dayOfWeek = weekStart.getDay();
+                    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 週日特殊處理
+                    weekStart.setDate(weekStart.getDate() + diff);
+                    weekStart.setHours(0, 0, 0, 0);
+                    
+                    // 本週日
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekEnd.getDate() + 6);
+                    weekEnd.setHours(23, 59, 59, 999);
+                    
+                    return shipDate >= weekStart && shipDate <= weekEnd;
+
 
                 
             case 'month':
