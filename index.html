@@ -734,20 +734,20 @@
                     </div>
                     
                     <div class="table-container">
-                        <table id="inventoryTable">
-                            <thead>
-                                <tr>
-                                    <th>SKU</th>
-                                    <th>品名</th>
-                                    <th>溫層</th>
-                                    <th>現有庫存</th>
-                                    <th>在途量</th>
-                                    <th>可用量</th>
-                                    <th>安全庫存</th>
-                                    <th>狀態</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
+                                        <table id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th>品項編號</th>
+                            <th>品名</th>
+                            <th>溫層</th>
+                            <th>庫存</th>
+                            <th>安全庫存</th>
+                            <th>庫存中低點</th>
+                            <th>狀態</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+
                             <tbody id="inventoryTableBody">
                                 <!-- 動態載入 -->
                             </tbody>
@@ -1019,7 +1019,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbyD19fK0I8MUX5LTMXhZvs4DF0QX-y8Sz8IxEjZCcvvodLrAeqIt7IX2LBbpxQ16tlT/exec">
+                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbydvUr1jCo6Z4FeCsRD2lzhPJkostVH-vynI8wHsGxLEY7mijhMd0jHNkb6Kb7RJSXs/exec">
                             </div>
                             <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
                             <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
@@ -1069,7 +1069,7 @@
     
     <script>
         // 系統配置
-        let GAS_URL = 'https://script.google.com/macros/s/AKfycbyD19fK0I8MUX5LTMXhZvs4DF0QX-y8Sz8IxEjZCcvvodLrAeqIt7IX2LBbpxQ16tlT/exec';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbydvUr1jCo6Z4FeCsRD2lzhPJkostVH-vynI8wHsGxLEY7mijhMd0jHNkb6Kb7RJSXs/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
         // 用戶會話管理
@@ -1570,29 +1570,42 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             tbody.innerHTML = filtered.map(item => {
-                const status = item.available < item.safetyStock ? 'danger' : 
-                              item.available < item.rop ? 'warning' : 'normal';
-                
-                return `
-                    <tr>
-                        <td>${item.sku}</td>
-                        <td>${item.name}</td>
-                        <td>${item.tempZone}</td>
-                        <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'currentStock')">${item.currentStock || 0}</td>
-                        <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'inTransit')">${item.inTransit || 0}</td>
-                        <td>${item.available || 0}</td>
-                        <td>${item.safetyStock || 0}</td>
-                        <td><span class="status-badge status-${status}">${
-                            status === 'danger' ? '缺貨' : 
-                            status === 'warning' ? '低庫存' : '正常'
-                        }</span></td>
-                        <td>
-                            <button class="btn btn-primary" style="padding: 5px 10px;" onclick="updateInventoryItem('${item.sku}')">更新</button>
-                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteInventoryItem('${item.sku}')">刪除</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+    // 狀態判斷邏輯：
+    // 🔴 紅色：庫存 ≤ 安全庫存
+    // 🟡 黃色：庫存 ≤ 庫存中低點
+    // ✅ 綠色：正常
+    const stock = item.currentStock || 0;
+    const safetyStock = item.safetyStock || 0;
+    const midLowPoint = item.midLowPoint || 0;
+    
+    let status = 'normal';
+    let statusText = '✅ 正常';
+    
+    if (stock <= safetyStock) {
+        status = 'danger';
+        statusText = '🔴 低於安全庫存';
+    } else if (stock <= midLowPoint) {
+        status = 'warning';
+        statusText = '🟡 低於中低點';
+    }
+    
+    return `
+        <tr>
+            <td>${item.sku}</td>
+            <td>${item.name}</td>
+            <td>${item.tempZone}</td>
+            <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'currentStock')">${stock}</td>
+            <td>${safetyStock}</td>
+            <td>${midLowPoint}</td>
+            <td><span class="status-badge status-${status}">${statusText}</span></td>
+            <td>
+                <button class="btn btn-primary" style="padding: 5px 10px;" onclick="updateInventoryItem('${item.sku}')">更新</button>
+                <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteInventoryItem('${item.sku}')">刪除</button>
+            </td>
+        </tr>
+    `;
+}).join('');
+
         }
         
         function searchInventory() {
