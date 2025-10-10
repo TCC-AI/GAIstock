@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>昶青物流客戶託收託運GAI數據管理系統</title>
     <style>
+        /* 補單管理表格樣式 */
+#replenishmentTable {
+    font-size: 0.85em;
+    width: 100%;
+}
+
+#replenishmentTable th,
+#replenishmentTable td {
+    padding: 8px 5px;
+    white-space: nowrap;
+}
+
+#replenishmentTable th {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    z-index: 10;
+}
+
         /* 自訂日期範圍樣式 */
 #customDateRange {
     animation: slideDown 0.3s ease-out;
@@ -1096,48 +1116,111 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
                 </div>
             </div>
             
-            <!-- 補單管理 -->
-            <div id="replenishment" class="tab-content">
-                <div class="permission-message" id="replenishmentPermissionMessage" style="display: none;">
-                    <h3>🔒 權限不足</h3>
-                    <p>您目前的權限等級無法訪問此功能</p>
-                    <p>如需使用此功能，請聯繫系統管理員提升權限</p>
+<!-- 補單管理 -->
+<div id="replenishment" class="tab-content">
+    <div class="permission-message" id="replenishmentPermissionMessage" style="display: none;">
+        <h3>🔒 權限不足</h3>
+        <p>您目前的權限等級無法訪問此功能</p>
+        <p>如需使用此功能，請聯繫系統管理員提升權限</p>
+    </div>
+    
+    <div id="replenishmentContent">
+        <h2>智能補單管理</h2>
+        
+        <!-- 操作按鈕區 -->
+        <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="generateReplenishment()">🔄 重新載入補單建議</button>
+            <button class="btn btn-success" onclick="approveAllSuggestions()">✅ 全部核准</button>
+            <button class="btn btn-warning" onclick="exportReplenishment()">📥 匯出補單</button>
+            <button class="btn btn-danger" onclick="clearPending()">🗑️ 清除待處理</button>
+        </div>
+        
+        <!-- 篩選區 -->
+        <div class="form-group">
+            <div class="input-group" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                <!-- 搜尋框 -->
+                <div>
+                    <label>🔍 快速搜尋</label>
+                    <input type="text" class="form-control" id="replenishmentSearch" 
+                           placeholder="輸入SKU或品名..." onkeyup="filterReplenishment()">
                 </div>
                 
-                <div id="replenishmentContent">
-                    <h2>智能補單管理</h2>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <button class="btn btn-primary" onclick="generateReplenishment()">🔄 產生補單建議</button>
-                        <button class="btn btn-success" onclick="approveAllSuggestions()">✅ 全部核准</button>
-                        <button class="btn btn-warning" onclick="exportReplenishment()">📥 匯出補單</button>
-                        <button class="btn btn-danger" onclick="clearPending()">🗑️ 清除待處理</button>
-                    </div>
-                    
-                    <h3>補單建議清單</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th><input type="checkbox" id="selectAll" onchange="selectAllReplenishments()"></th>
-                                    <th>SKU</th>
-                                    <th>品名</th>
-                                    <th>現有庫存</th>
-                                    <th>安全庫存</th>
-                                    <th>補貨點</th>
-                                    <th>建議補貨量</th>
-                                    <th>預計金額</th>
-                                    <th>優先級</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="replenishmentTableBody">
-                                <!-- 動態載入 -->
-                            </tbody>
-                        </table>
-                    </div>
+                <!-- 溫層篩選 -->
+                <div>
+                    <label>🌡️ 溫層</label>
+                    <select class="form-control" id="replenishmentTempFilter" onchange="filterReplenishment()">
+                        <option value="">全部溫層</option>
+                        <option value="冷凍">❄️ 冷凍</option>
+                        <option value="冷藏">🧊 冷藏</option>
+                    </select>
                 </div>
+                
+                <!-- 廠商篩選 -->
+                <div>
+                    <label>🏭 廠商</label>
+                    <select class="form-control" id="replenishmentSupplierFilter" onchange="filterReplenishment()">
+                        <option value="">全部廠商</option>
+                        <!-- 動態生成 -->
+                    </select>
+                </div>
+                
+                <!-- 狀態篩選 -->
+                <div>
+                    <label>🚦 庫存狀態</label>
+                    <select class="form-control" id="replenishmentStatusFilter" onchange="filterReplenishment()">
+                        <option value="">全部狀態</option>
+                        <option value="danger">🔴 低於安全庫存</option>
+                        <option value="warning">🟡 低於中低點</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="clearReplenishmentFilters()">清除篩選</button>
             </div>
+            
+            <!-- 篩選統計 -->
+            <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 0.9em; color: #666;">
+                <i class="fas fa-info-circle"></i> 
+                顯示 <strong id="replenishmentFilteredCount" style="color: #667eea;">0</strong> / 
+                <strong id="replenishmentTotalCount" style="color: #333;">0</strong> 筆補單建議
+            </div>
+        </div>
+        
+        <!-- 補單建議清單表格 -->
+        <h3>補單建議清單</h3>
+        <div class="table-container">
+            <table id="replenishmentTable">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" onchange="selectAllReplenishments()"></th>
+                        <th>品項編號</th>
+                        <th>品名</th>
+                        <th>進貨日</th>
+                        <th>批號/有效</th>
+                        <th>前日庫存</th>
+                        <th>出貨總數</th>
+                        <th>退貨</th>
+                        <th>進貨</th>
+                        <th>庫存</th>
+                        <th>允收日</th>
+                        <th>允收天數</th>
+                        <th>有效天數</th>
+                        <th>出貨日期</th>
+                        <th>廠商</th>
+                        <th>安全庫存</th>
+                        <th>庫存中低點</th>
+                        <th>溫層</th>
+                        <th>狀態</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="replenishmentTableBody">
+                    <!-- 動態載入 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
             
             <!-- 倉容監控 -->
             <div id="capacity" class="tab-content">
@@ -2234,59 +2317,230 @@ function clearCustomDate() {
         }
         
         // === 補單管理功能 ===
-        function generateReplenishment() {
-            if (!checkPermission('s3')) {
-                alert('權限不足');
-                return;
+function generateReplenishment() {
+    if (!checkPermission('s3')) {
+        alert('權限不足');
+        return;
+    }
+    
+    showLoading();
+    
+    // ⭐ 直接讀取 Google Sheet 的【補單建議】工作表
+    callAPI('getReplenishments')
+        .then(result => {
+            hideLoading();
+            const count = result.suggestions?.length || 0;
+            alert(`已載入 ${count} 筆補單建議`);
+            systemData.replenishments = result.suggestions || [];
+            displayReplenishments();
+        })
+        .catch(error => {
+            hideLoading();
+            alert('載入補單失敗: ' + error.message);
+        });
+}
+
+        
+function loadReplenishments() {
+    if (!checkPermission('s3')) return;
+    
+    showLoading();
+    
+    callAPI('getReplenishments')
+        .then(data => {
+            hideLoading();
+            systemData.replenishments = data.suggestions || [];
+            displayReplenishments();
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Replenishments error:', error);
+            alert('載入補單建議失敗: ' + error.message);
+        });
+}
+
+        
+function displayReplenishments() {
+    const tbody = document.getElementById('replenishmentTableBody');
+    
+    // ✅ 更新廠商下拉選單
+    updateReplenishmentSupplierFilter();
+    
+    // ✅ 更新統計
+    updateReplenishmentStats(systemData.replenishments.length, systemData.replenishments.length);
+    
+    // ✅ 應用篩選
+    filterReplenishment();
+}
+
+// ✅ 新增：更新廠商下拉選單
+function updateReplenishmentSupplierFilter() {
+    const supplierFilter = document.getElementById('replenishmentSupplierFilter');
+    if (!supplierFilter) return;
+    
+    // 取得所有唯一的廠商
+    const suppliers = [...new Set(systemData.replenishments.map(item => item.supplier).filter(s => s))];
+    suppliers.sort();
+    
+    // 保存當前選擇
+    const currentValue = supplierFilter.value;
+    
+    // 清空並重建選項
+    supplierFilter.innerHTML = '<option value="">全部廠商</option>';
+    suppliers.forEach(supplier => {
+        const option = document.createElement('option');
+        option.value = supplier;
+        option.textContent = supplier;
+        supplierFilter.appendChild(option);
+    });
+    
+    // 恢復選擇
+    supplierFilter.value = currentValue;
+}
+        // ✅ 新增：篩選補單清單
+function filterReplenishment() {
+    if (!checkPermission('s3')) return;
+    
+    const tbody = document.getElementById('replenishmentTableBody');
+    const searchTerm = document.getElementById('replenishmentSearch')?.value.toLowerCase() || '';
+    const tempFilter = document.getElementById('replenishmentTempFilter')?.value || '';
+    const supplierFilter = document.getElementById('replenishmentSupplierFilter')?.value || '';
+    const statusFilter = document.getElementById('replenishmentStatusFilter')?.value || '';
+    
+    let filtered = systemData.replenishments;
+    
+    // 1️⃣ 搜尋過濾
+    if (searchTerm) {
+        filtered = filtered.filter(item => 
+            (item.sku && item.sku.toLowerCase().includes(searchTerm)) || 
+            (item.name && item.name.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    // 2️⃣ 溫層過濾
+    if (tempFilter) {
+        filtered = filtered.filter(item => item.tempZone === tempFilter);
+    }
+    
+    // 3️⃣ 廠商過濾
+    if (supplierFilter) {
+        filtered = filtered.filter(item => item.supplier === supplierFilter);
+    }
+    
+    // 4️⃣ 狀態過濾
+    if (statusFilter) {
+        filtered = filtered.filter(item => {
+            const stock = parseFloat(item.currentStock) || 0;
+            const safetyStock = parseFloat(item.safetyStock) || 0;
+            const rop = parseFloat(item.rop) || 0;
+            
+            let status = 'normal';
+            if (stock <= safetyStock) {
+                status = 'danger';
+            } else if (stock <= rop) {
+                status = 'warning';
             }
             
-            callAPI('generateReplenishment')
-                .then(result => {
-                    alert(`已產生 ${result.count || 0} 筆補單建議`);
-                    loadReplenishments();
-                })
-                .catch(error => {
-                    alert('產生補單失敗: ' + error.message);
-                });
+            return status === statusFilter;
+        });
+    }
+    
+    // ✅ 更新統計資訊
+    updateReplenishmentStats(filtered.length, systemData.replenishments.length);
+    
+    // 渲染表格
+    tbody.innerHTML = filtered.map(item => {
+        // 狀態判斷
+        const stock = parseFloat(item.currentStock) || 0;
+        const safetyStock = parseFloat(item.safetyStock) || 0;
+        const rop = parseFloat(item.rop) || 0;
+        
+        let status = 'normal';
+        let statusText = '✅ 正常';
+        let statusClass = 'status-normal';
+        
+        if (stock <= safetyStock) {
+            status = 'danger';
+            statusText = '🔴 低於安全庫存';
+            statusClass = 'status-danger';
+        } else if (stock <= rop) {
+            status = 'warning';
+            statusText = '🟡 低於中低點';
+            statusClass = 'status-warning';
         }
         
-        function loadReplenishments() {
-            if (!checkPermission('s3')) return;
-            
-            callAPI('getReplenishments')
-                .then(data => {
-                    systemData.replenishments = data.suggestions || [];
-                    displayReplenishments();
-                })
-                .catch(error => {
-                    console.error('Replenishments error:', error);
-                });
-        }
+        // 格式化日期
+        const formatDate = (date) => {
+            if (!date) return '-';
+            if (typeof date === 'string' && date.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                return date;
+            }
+            const d = new Date(date);
+            return isNaN(d.getTime()) ? date : d.toLocaleDateString('zh-TW');
+        };
         
-        function displayReplenishments() {
-            const tbody = document.getElementById('replenishmentTableBody');
-            
-            tbody.innerHTML = systemData.replenishments.map((item, index) => {
-                const priority = item.priority || (item.currentStock < item.safetyStock ? 'HIGH' : 'MEDIUM');
-                
-                return `
-                    <tr>
-                        <td><input type="checkbox" value="${item.sku}" class="replenishment-check"></td>
-                        <td>${item.sku}</td>
-                        <td>${item.name}</td>
-                        <td>${item.currentStock || 0}</td>
-                        <td>${item.safetyStock || 0}</td>
-                        <td>${item.rop || 0}</td>
-                        <td>${item.suggestedQty || 0}</td>
-                        <td>NT$ ${(item.suggestedQty * 1000).toLocaleString()}</td>
-                        <td><span class="status-badge status-${priority === 'HIGH' ? 'danger' : 'warning'}">${priority}</span></td>
-                        <td>
-                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveReplenishment('${item.sku}')">核准</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
+        return `
+            <tr>
+                <td><input type="checkbox" value="${item.sku}" class="replenishment-check"></td>
+                <td>${item.sku || ''}</td>
+                <td>${item.name || ''}</td>
+                <td>${formatDate(item.purchaseDate)}</td>
+                <td>${item.batchExpiry || ''}</td>
+                <td>${item.previousStock || 0}</td>
+                <td>${item.shipmentTotal || 0}</td>
+                <td>${item.returns || 0}</td>
+                <td>${item.incoming || 0}</td>
+                <td>${stock}</td>
+                <td>${formatDate(item.acceptanceDate)}</td>
+                <td>${item.acceptanceDays || '-'}</td>
+                <td>${item.validDays || '-'}</td>
+                <td>${formatDate(item.shipmentDate)}</td>
+                <td>${item.supplier || ''}</td>
+                <td>${safetyStock}</td>
+                <td>${rop}</td>
+                <td>${item.tempZone || ''}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>
+                    <button class="btn btn-success" style="padding: 5px 10px;" 
+                            onclick="approveReplenishment('${item.sku}')">✅ 核准</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // 如果沒有資料
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="20" style="text-align: center; padding: 40px; color: #9ca3af;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                    <div style="font-size: 16px; font-weight: bold;">沒有符合條件的補單建議</div>
+                    <div style="font-size: 14px; margin-top: 8px; color: #6b7280;">請調整篩選條件或重新載入資料</div>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// ✅ 新增：清除篩選
+function clearReplenishmentFilters() {
+    document.getElementById('replenishmentSearch').value = '';
+    document.getElementById('replenishmentTempFilter').value = '';
+    document.getElementById('replenishmentSupplierFilter').value = '';
+    document.getElementById('replenishmentStatusFilter').value = '';
+    filterReplenishment();
+}
+
+
+// ✅ 新增：更新統計資訊
+function updateReplenishmentStats(filteredCount, totalCount) {
+    const filteredCountEl = document.getElementById('replenishmentFilteredCount');
+    const totalCountEl = document.getElementById('replenishmentTotalCount');
+    
+    if (filteredCountEl) filteredCountEl.textContent = filteredCount;
+    if (totalCountEl) totalCountEl.textContent = totalCount;
+}
+
         
         function selectAllReplenishments() {
             if (!checkPermission('s3')) return;
