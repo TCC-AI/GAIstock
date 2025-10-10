@@ -2398,67 +2398,80 @@ function clearCustomDate() {
                 });
         }
         
-        function displayCapacity() {
-            console.log('開始顯示倉容資料:', systemData.capacity);
+function displayCapacity() {
+    console.log('開始顯示倉容資料:', systemData.capacity);
+    
+    const freezerContainer = document.getElementById('freezerCapacity');
+    if (!freezerContainer) {
+        console.error('找不到 freezerCapacity 容器');
+        return;
+    }
+    
+    const freezers = systemData.capacity.freezers || [];
+    if (freezers.length === 0) {
+        freezerContainer.innerHTML = `
+            <div class="card">
+                <div class="card-title">無資料</div>
+                <p>尚未建立冷凍庫資料</p>
+                ${checkPermission('s4') ? '<button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>' : ''}
+            </div>
+        `;
+    } else {
+        freezerContainer.innerHTML = freezers.map((wh, index) => {
+            // ✅ 修正：將百分比格式化為整數
+            const usageRate = Math.round(parseFloat(wh.usageRate) || 0);
+            const bgColor = usageRate > 85 ? '#f44336' : '#667eea';
             
-            const freezerContainer = document.getElementById('freezerCapacity');
-            if (!freezerContainer) {
-                console.error('找不到 freezerCapacity 容器');
-                return;
-            }
-            
-            const freezers = systemData.capacity.freezers || [];
-            if (freezers.length === 0) {
-                freezerContainer.innerHTML = `
-                    <div class="card">
-                        <div class="card-title">無資料</div>
-                        <p>尚未建立冷凍庫資料</p>
-                        ${checkPermission('s4') ? '<button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>' : ''}
+            return `
+                <div class="card">
+                    <div class="card-title">${wh.name || `冷凍庫 #${index + 1}`}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${usageRate}%; background: ${bgColor}">${usageRate}%</div>
                     </div>
-                `;
-            } else {
-                freezerContainer.innerHTML = freezers.map((wh, index) => `
-                    <div class="card">
-                        <div class="card-title">${wh.name || `冷凍庫 #${index + 1}`}</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${wh.usageRate || 0}%; background: ${(wh.usageRate || 0) > 85 ? '#f44336' : '#667eea'}">${wh.usageRate || 0}%</div>
-                        </div>
-                        <div class="kpi-label">${wh.usedPallets || 0}/${wh.totalPallets || 0} 棧板位</div>
-                        <small style="color: #666;">更新時間: ${wh.updateTime ? new Date(wh.updateTime).toLocaleString('zh-TW') : '未知'}</small>
-                    </div>
-                `).join('');
-            }
+                    <div class="kpi-label">${wh.usedPallets || 0}/${wh.totalPallets || 0} 棧板位</div>
+                    <small style="color: #666;">更新時間: ${wh.updateTime ? new Date(wh.updateTime).toLocaleString('zh-TW') : '未知'}</small>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    const coolerContainer = document.getElementById('coolerCapacity');
+    if (!coolerContainer) {
+        console.error('找不到 coolerCapacity 容器');
+        return;
+    }
+    
+    const coolers = systemData.capacity.coolers || [];
+    if (coolers.length === 0) {
+        coolerContainer.innerHTML = `
+            <div class="card">
+                <div class="card-title">無資料</div>
+                <p>尚未建立冷藏庫資料</p>
+                ${checkPermission('s4') ? '<button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>' : ''}
+            </div>
+        `;
+    } else {
+        coolerContainer.innerHTML = coolers.map((wh, index) => {
+            // ✅ 修正：將百分比格式化為整數
+            const usageRate = Math.round(parseFloat(wh.usageRate) || 0);
+            const bgColor = usageRate > 85 ? '#f44336' : '#667eea';
             
-            const coolerContainer = document.getElementById('coolerCapacity');
-            if (!coolerContainer) {
-                console.error('找不到 coolerCapacity 容器');
-                return;
-            }
-            
-            const coolers = systemData.capacity.coolers || [];
-            if (coolers.length === 0) {
-                coolerContainer.innerHTML = `
-                    <div class="card">
-                        <div class="card-title">無資料</div>
-                        <p>尚未建立冷藏庫資料</p>
-                        ${checkPermission('s4') ? '<button class="btn btn-primary" onclick="initializeSystem()">初始化系統</button>' : ''}
+            return `
+                <div class="card">
+                    <div class="card-title">${wh.name || `冷藏庫 #${index + 1}`}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${usageRate}%; background: ${bgColor}">${usageRate}%</div>
                     </div>
-                `;
-            } else {
-                coolerContainer.innerHTML = coolers.map((wh, index) => `
-                    <div class="card">
-                        <div class="card-title">${wh.name || `冷藏庫 #${index + 1}`}</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${wh.usageRate || 0}%; background: ${(wh.usageRate || 0) > 85 ? '#f44336' : '#667eea'}">${wh.usageRate || 0}%</div>
-                        </div>
-                        <div class="kpi-label">${wh.usedPallets || 0}/${wh.totalPallets || 0} 棧板位</div>
-                        <small style="color: #666;">更新時間: ${wh.updateTime ? new Date(wh.updateTime).toLocaleString('zh-TW') : '未知'}</small>
-                    </div>
-                `).join('');
-            }
-            
-            console.log('倉容資料顯示完成');
-        }
+                    <div class="kpi-label">${wh.usedPallets || 0}/${wh.totalPallets || 0} 棧板位</div>
+                    <small style="color: #666;">更新時間: ${wh.updateTime ? new Date(wh.updateTime).toLocaleString('zh-TW') : '未知'}</small>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    console.log('倉容資料顯示完成');
+}
+
         
 function testConnection() {
     if (!checkPermission('s4')) {
