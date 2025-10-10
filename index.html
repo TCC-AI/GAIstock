@@ -1900,6 +1900,7 @@ function filterInventory() {
 }
 
 // ✅ 新增：出貨日期篩選邏輯
+// ✅ 修正版：出貨日期篩選邏輯
 function filterByShipDate(items, filterType) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1916,6 +1917,9 @@ function filterByShipDate(items, filterType) {
         const shipDate = parseDate(item.shipDate);
         if (!shipDate) return false;
         
+        // ✅ 重要：將 shipDate 也設定為 00:00:00，確保只比較日期
+        shipDate.setHours(0, 0, 0, 0);
+        
         switch(filterType) {
             case 'today':
                 return isSameDay(shipDate, today);
@@ -1931,8 +1935,13 @@ function filterByShipDate(items, filterType) {
                 return shipDate >= today && shipDate <= weekEnd;
                 
             case 'month':
+                // ✅ 修正：篩選「本月內」的所有日期，不限於今天之後
+                const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
                 const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                return shipDate >= today && shipDate <= monthEnd;
+                monthStart.setHours(0, 0, 0, 0);
+                monthEnd.setHours(23, 59, 59, 999); // 設定為當月最後一天的最後一刻
+                
+                return shipDate >= monthStart && shipDate <= monthEnd;
                 
             case 'overdue':
                 return shipDate < today;
@@ -1945,6 +1954,10 @@ function filterByShipDate(items, filterType) {
                 
                 const start = startDate ? new Date(startDate) : new Date('1900-01-01');
                 const end = endDate ? new Date(endDate) : new Date('2100-12-31');
+                
+                // ✅ 設定時間為 00:00:00 和 23:59:59
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
                 
                 return shipDate >= start && shipDate <= end;
                 
