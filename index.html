@@ -5,6 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>昶青物流客戶託收託運GAI數據管理系統</title>
     <style>
+/* 篩選器標籤樣式 */
+.form-group label {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 5px;
+}
+
+/* 下拉選單樣式 */
+.form-control {
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-control:hover {
+    border-color: #9ca3af;
+}
+
+/* 篩選統計樣式 */
+#filteredCount {
+    color: #667eea;
+    font-weight: bold;
+}
+
+#totalCount {
+    color: #333;
+    font-weight: bold;
+}
+
+        
        #inventoryTable {
     font-size: 0.85em; /* 縮小字體 */
     width: 100%;
@@ -730,24 +764,58 @@
                 <div id="inventoryContent">
                     <h2>即時庫存管理</h2>
                     
+                    <!-- ✅ 新版：增加廠商和狀態篩選 -->
                     <div class="form-group">
-                        <div class="input-group">
-                            <div style="flex: 1;">
-                                <label>快速搜尋</label>
+                        <div class="input-group" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto auto; gap: 10px; align-items: end;">
+                            <!-- 搜尋框 -->
+                            <div>
+                                <label>🔍 快速搜尋</label>
                                 <input type="text" class="form-control" id="inventorySearch" placeholder="輸入SKU或品名..." onkeyup="searchInventory()">
                             </div>
+                            
+                            <!-- 溫層篩選 -->
                             <div>
-                                <label>溫層篩選</label>
+                                <label>🌡️ 溫層</label>
                                 <select class="form-control" id="tempFilter" onchange="filterInventory()">
-                                    <option value="">全部</option>
-                                    <option value="冷凍">冷凍 (-18°C)</option>
-                                    <option value="冷藏">冷藏 (4°C)</option>
+                                    <option value="">全部溫層</option>
+                                    <option value="冷凍">❄️ 冷凍</option>
+                                    <option value="冷藏">🧊 冷藏</option>
                                 </select>
                             </div>
-                            <button class="btn btn-primary" onclick="addNewInventory()">➕ 新增庫存</button>
+                            
+                            <!-- ✅ 新增：廠商篩選 -->
+                            <div>
+                                <label>🏭 廠商</label>
+                                <select class="form-control" id="supplierFilter" onchange="filterInventory()">
+                                    <option value="">全部廠商</option>
+                                    <!-- 動態生成 -->
+                                </select>
+                            </div>
+                            
+                            <!-- ✅ 新增：狀態篩選 -->
+                            <div>
+                                <label>🚦 狀態</label>
+                                <select class="form-control" id="statusFilter" onchange="filterInventory()">
+                                    <option value="">全部狀態</option>
+                                    <option value="danger">🔴 低於安全庫存</option>
+                                    <option value="warning">🟡 低於中低點</option>
+                                    <option value="normal">✅ 正常</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 按鈕 -->
+                            <button class="btn btn-primary" onclick="addNewInventory()">➕ 新增</button>
                             <button class="btn btn-success" onclick="refreshInventory()">🔄 重新整理</button>
                         </div>
+                        
+                        <!-- ✅ 新增：篩選統計 -->
+                        <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 0.9em; color: #666;">
+                            <i class="fas fa-info-circle"></i> 
+                            顯示 <strong id="filteredCount" style="color: #667eea;">0</strong> / 
+                            <strong id="totalCount" style="color: #333;">0</strong> 筆資料
+                        </div>
                     </div>
+
                     
                     <div class="table-container">
                                                         <table id="inventoryTable">
@@ -1576,26 +1644,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
         
-function displayInventory() {
+function filterInventory() {
+    if (!checkPermission('s2')) return;
+    
     const tbody = document.getElementById('inventoryTableBody');
-    const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
-    const tempFilter = document.getElementById('tempFilter').value;
+    const searchTerm = document.getElementById('inventorySearch')?.value.toLowerCase() || '';
+    const tempFilter = document.getElementById('tempFilter')?.value || '';
+    const supplierFilter = document.getElementById('supplierFilter')?.value || '';
+    const statusFilter = document.getElementById('statusFilter')?.value || '';
     
     let filtered = systemData.inventory;
     
-    // 搜尋過濾
+    // 1️⃣ 搜尋過濾（SKU 或品名）
     if (searchTerm) {
         filtered = filtered.filter(item => 
-            item.sku.toLowerCase().includes(searchTerm) || 
-            item.name.toLowerCase().includes(searchTerm)
+            (item.sku && item.sku.toLowerCase().includes(searchTerm)) || 
+            (item.name && item.name.toLowerCase().includes(searchTerm))
         );
     }
     
-    // 溫層過濾
+    // 2️⃣ 溫層過濾
     if (tempFilter) {
         filtered = filtered.filter(item => item.tempZone === tempFilter);
     }
     
+    // 3️⃣ 廠商過濾
+    if (supplierFilter) {
+        filtered = filtered.filter(item => item.supplier === supplierFilter);
+    }
+    
+    // 4️⃣ 狀態過濾
+    if (statusFilter) {
+        filtered = filtered.filter(item => {
+            const stock = parseFloat(item.stock) || 0;
+            const safetyStock = parseFloat(item.safetyStock) || 0;
+            const midLowPoint = parseFloat(item.midLowPoint) || 0;
+            
+            let status = 'normal';
+            if (stock <= safetyStock) {
+                status = 'danger';
+            } else if (stock <= midLowPoint) {
+                status = 'warning';
+            }
+            
+            return status === statusFilter;
+        });
+    }
+    
+    // ✅ 更新統計資訊
+    updateFilterStats(filtered.length, systemData.inventory.length);
+    
+    // 渲染表格
     tbody.innerHTML = filtered.map(item => {
         // 狀態判斷邏輯
         const stock = parseFloat(item.stock) || 0;
@@ -1640,14 +1739,29 @@ function displayInventory() {
             </tr>
         `;
     }).join('');
+    
+    // 如果沒有資料，顯示提示
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="19" style="text-align: center; padding: 40px; color: #9ca3af;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                    <div style="font-size: 16px; font-weight: bold;">沒有符合條件的資料</div>
+                    <div style="font-size: 14px; margin-top: 8px; color: #6b7280;">請調整篩選條件或新增庫存資料</div>
+                </td>
+            </tr>
+        `;
+    }
 }
 
+
         
-        function searchInventory() {
-            if (checkPermission('s2')) {
-                displayInventory();
-            }
-        }
+function searchInventory() {
+    if (checkPermission('s2')) {
+        filterInventory(); // 統一使用 filterInventory
+    }
+}
+
         
         function filterInventory() {
             if (checkPermission('s2')) {
