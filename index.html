@@ -734,15 +734,26 @@
                     </div>
                     
                     <div class="table-container">
-                                        <table id="inventoryTable">
+                                                        <table id="inventoryTable">
                     <thead>
                         <tr>
                             <th>品項編號</th>
                             <th>品名</th>
-                            <th>溫層</th>
+                            <th>進貨日</th>
+                            <th>批號/有效</th>
+                            <th>前日庫存</th>
+                            <th>出貨總數</th>
+                            <th>退貨</th>
+                            <th>進貨</th>
                             <th>庫存</th>
+                            <th>允收日</th>
+                            <th>允收天數</th>
+                            <th>有效天數</th>
+                            <th>出貨日期</th>
+                            <th>廠商</th>
                             <th>安全庫存</th>
                             <th>庫存中低點</th>
+                            <th>溫層</th>
                             <th>狀態</th>
                             <th>操作</th>
                         </tr>
@@ -1019,7 +1030,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbydvUr1jCo6Z4FeCsRD2lzhPJkostVH-vynI8wHsGxLEY7mijhMd0jHNkb6Kb7RJSXs/exec">
+                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbwc1mmnxCQYYuL99n6IF17fV7rHY8joQBhLi0Yrd1L2H56rJKrWF_amHseOnDxRNA/exec">
                             </div>
                             <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
                             <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
@@ -1069,7 +1080,7 @@
     
     <script>
         // 系統配置
-        let GAS_URL = 'https://script.google.com/macros/s/AKfycbydvUr1jCo6Z4FeCsRD2lzhPJkostVH-vynI8wHsGxLEY7mijhMd0jHNkb6Kb7RJSXs/exec';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbwc1mmnxCQYYuL99n6IF17fV7rHY8joQBhLi0Yrd1L2H56rJKrWF_amHseOnDxRNA/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
         // 用戶會話管理
@@ -1549,64 +1560,72 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
         
-        function displayInventory() {
-            const tbody = document.getElementById('inventoryTableBody');
-            const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
-            const tempFilter = document.getElementById('tempFilter').value;
-            
-            let filtered = systemData.inventory;
-            
-            // 搜尋過濾
-            if (searchTerm) {
-                filtered = filtered.filter(item => 
-                    item.sku.toLowerCase().includes(searchTerm) || 
-                    item.name.toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            // 溫層過濾
-            if (tempFilter) {
-                filtered = filtered.filter(item => item.tempZone === tempFilter);
-            }
-            
-            tbody.innerHTML = filtered.map(item => {
-    // 狀態判斷邏輯：
-    // 🔴 紅色：庫存 ≤ 安全庫存
-    // 🟡 黃色：庫存 ≤ 庫存中低點
-    // ✅ 綠色：正常
-    const stock = item.currentStock || 0;
-    const safetyStock = item.safetyStock || 0;
-    const midLowPoint = item.midLowPoint || 0;
+function displayInventory() {
+    const tbody = document.getElementById('inventoryTableBody');
+    const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
+    const tempFilter = document.getElementById('tempFilter').value;
     
-    let status = 'normal';
-    let statusText = '✅ 正常';
+    let filtered = systemData.inventory;
     
-    if (stock <= safetyStock) {
-        status = 'danger';
-        statusText = '🔴 低於安全庫存';
-    } else if (stock <= midLowPoint) {
-        status = 'warning';
-        statusText = '🟡 低於中低點';
+    // 搜尋過濾
+    if (searchTerm) {
+        filtered = filtered.filter(item => 
+            item.sku.toLowerCase().includes(searchTerm) || 
+            item.name.toLowerCase().includes(searchTerm)
+        );
     }
     
-    return `
-        <tr>
-            <td>${item.sku}</td>
-            <td>${item.name}</td>
-            <td>${item.tempZone}</td>
-            <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'currentStock')">${stock}</td>
-            <td>${safetyStock}</td>
-            <td>${midLowPoint}</td>
-            <td><span class="status-badge status-${status}">${statusText}</span></td>
-            <td>
-                <button class="btn btn-primary" style="padding: 5px 10px;" onclick="updateInventoryItem('${item.sku}')">更新</button>
-                <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteInventoryItem('${item.sku}')">刪除</button>
-            </td>
-        </tr>
-    `;
-}).join('');
-
+    // 溫層過濾
+    if (tempFilter) {
+        filtered = filtered.filter(item => item.tempZone === tempFilter);
+    }
+    
+    tbody.innerHTML = filtered.map(item => {
+        // 狀態判斷邏輯
+        const stock = parseFloat(item.stock) || 0;
+        const safetyStock = parseFloat(item.safetyStock) || 0;
+        const midLowPoint = parseFloat(item.midLowPoint) || 0;
+        
+        let status = 'normal';
+        let statusText = '✅ 正常';
+        
+        if (stock <= safetyStock) {
+            status = 'danger';
+            statusText = '🔴 低於安全庫存';
+        } else if (stock <= midLowPoint) {
+            status = 'warning';
+            statusText = '🟡 低於中低點';
         }
+        
+        return `
+            <tr>
+                <td>${item.sku || ''}</td>
+                <td>${item.name || ''}</td>
+                <td>${item.purchaseDate || ''}</td>
+                <td>${item.batchExpiry || ''}</td>
+                <td>${item.previousStock || 0}</td>
+                <td>${item.shipmentQty || 0}</td>
+                <td>${item.returnQty || 0}</td>
+                <td>${item.receiveQty || 0}</td>
+                <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'stock')">${stock}</td>
+                <td>${item.acceptDate || ''}</td>
+                <td>${item.acceptDays || 0}</td>
+                <td>${item.validDays || 0}</td>
+                <td>${item.shipDate || ''}</td>
+                <td>${item.supplier || ''}</td>
+                <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'safetyStock')">${safetyStock}</td>
+                <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'midLowPoint')">${midLowPoint}</td>
+                <td>${item.tempZone || ''}</td>
+                <td><span class="status-badge status-${status}">${statusText}</span></td>
+                <td>
+                    <button class="btn btn-primary" style="padding: 5px 10px;" onclick="updateInventoryItem('${item.sku}')">更新</button>
+                    <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteInventoryItem('${item.sku}')">刪除</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
         
         function searchInventory() {
             if (checkPermission('s2')) {
