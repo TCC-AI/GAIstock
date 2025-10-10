@@ -2417,12 +2417,7 @@ function clearCustomDate() {
                     </div>
                 `;
             } else {
-                freezerContainer.innerHTML = freezers.map((wh, index) => {
-            // ✅ 修正：將百分比格式化為整數
-            const usageRate = Math.round(parseFloat(wh.usageRate) || 0);
-            const bgColor = usageRate > 85 ? '#f44336' : '#667eea';
-            
-            return `
+                freezerContainer.innerHTML = freezers.map((wh, index) => `
                     <div class="card">
                         <div class="card-title">${wh.name || `冷凍庫 #${index + 1}`}</div>
                         <div class="progress-bar">
@@ -2450,12 +2445,7 @@ function clearCustomDate() {
                     </div>
                 `;
             } else {
-                coolerContainer.innerHTML = coolers.map((wh, index) =>{
-            // ✅ 修正：將百分比格式化為整數
-            const usageRate = Math.round(parseFloat(wh.usageRate) || 0);
-            const bgColor = usageRate > 85 ? '#f44336' : '#667eea';
-            
-            return `
+                coolerContainer.innerHTML = coolers.map((wh, index) => `
                     <div class="card">
                         <div class="card-title">${wh.name || `冷藏庫 #${index + 1}`}</div>
                         <div class="progress-bar">
