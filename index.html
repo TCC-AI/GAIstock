@@ -1929,10 +1929,16 @@ function filterByShipDate(items, filterType) {
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 return isSameDay(shipDate, tomorrow);
                 
-            case 'week':
-                const weekEnd = new Date(today);
-                weekEnd.setDate(weekEnd.getDate() + 7);
-                return shipDate >= today && shipDate <= weekEnd;
+case 'week':
+    const weekStart = new Date(today);
+    weekStart.setDate(weekStart.getDate() - 6); // 往前推6天
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(today);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    return shipDate >= weekStart && shipDate <= weekEnd;
+
                 
             case 'month':
                 // ✅ 修正：篩選「本月內」的所有日期，不限於今天之後
