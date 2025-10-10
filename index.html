@@ -5,6 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>昶青物流客戶託收託運GAI數據管理系統</title>
     <style>
+        /* 自訂日期範圍樣式 */
+#customDateRange {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        padding: 0 15px;
+    }
+    to {
+        opacity: 1;
+        max-height: 200px;
+        padding: 15px;
+    }
+}
+
+/* 日期輸入框樣式 */
+input[type="date"] {
+    cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+}
+
+input[type="date"]:hover::-webkit-calendar-picker-indicator {
+    filter: invert(0.3);
+}
+
+/* 日期篩選資訊樣式 */
+#dateFilterInfo {
+    font-weight: 600;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
         /* 篩選器標籤樣式 */
 .form-group label {
     font-size: 0.9em;
@@ -764,8 +807,9 @@
                     <h2>即時庫存管理</h2>
                     
                     <!-- ✅ 新版：增加廠商和狀態篩選 -->
+<!-- ✅ 新版：增加廠商、狀態、出貨日期篩選 -->
 <div class="form-group">
-    <div class="input-group" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto auto; gap: 10px; align-items: end;">
+    <div class="input-group" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto auto; gap: 10px; align-items: end;">
         <!-- 搜尋框 -->
         <div>
             <label>🔍 快速搜尋</label>
@@ -782,7 +826,7 @@
             </select>
         </div>
         
-        <!-- ✅ 新增：廠商篩選 -->
+        <!-- 廠商篩選 -->
         <div>
             <label>🏭 廠商</label>
             <select class="form-control" id="supplierFilter" onchange="filterInventory()">
@@ -791,7 +835,7 @@
             </select>
         </div>
         
-        <!-- ✅ 新增：狀態篩選 -->
+        <!-- 狀態篩選 -->
         <div>
             <label>🚦 狀態</label>
             <select class="form-control" id="statusFilter" onchange="filterInventory()">
@@ -802,16 +846,46 @@
             </select>
         </div>
         
+        <!-- ✅ 新增：出貨日期篩選 -->
+        <div>
+            <label>📅 出貨日期</label>
+            <select class="form-control" id="shipDateFilter" onchange="filterInventory()">
+                <option value="">全部日期</option>
+                <option value="today">📌 今天</option>
+                <option value="tomorrow">➡️ 明天</option>
+                <option value="week">📆 本週</option>
+                <option value="month">📅 本月</option>
+                <option value="overdue">⚠️ 已逾期</option>
+                <option value="custom">🔧 自訂日期</option>
+            </select>
+        </div>
+        
         <!-- 按鈕 -->
         <button class="btn btn-primary" onclick="addNewInventory()">➕ 新增</button>
         <button class="btn btn-success" onclick="refreshInventory()">🔄 重新整理</button>
     </div>
     
-    <!-- ✅ 新增：篩選統計 -->
+    <!-- ✅ 新增：自訂日期範圍（預設隱藏） -->
+    <div id="customDateRange" style="display: none; margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #e0e0e0;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
+            <div>
+                <label style="font-size: 0.9em; font-weight: 600; color: #374151;">📅 開始日期</label>
+                <input type="date" class="form-control" id="startDate" onchange="filterInventory()">
+            </div>
+            <div>
+                <label style="font-size: 0.9em; font-weight: 600; color: #374151;">📅 結束日期</label>
+                <input type="date" class="form-control" id="endDate" onchange="filterInventory()">
+            </div>
+            <button class="btn btn-secondary" onclick="clearCustomDate()" style="padding: 10px 15px;">清除</button>
+        </div>
+    </div>
+    
+    <!-- 篩選統計 -->
     <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 0.9em; color: #666;">
         <i class="fas fa-info-circle"></i> 
         顯示 <strong id="filteredCount" style="color: #667eea;">0</strong> / 
         <strong id="totalCount" style="color: #333;">0</strong> 筆資料
+        <span id="dateFilterInfo" style="margin-left: 15px; color: #667eea;"></span>
     </div>
 </div>
 
@@ -1699,7 +1773,7 @@ function updateFilterStats(filteredCount, totalCount) {
 }
 
         
-        function filterInventory() {
+function filterInventory() {
     if (!checkPermission('s2')) return;
     
     const tbody = document.getElementById('inventoryTableBody');
@@ -1707,6 +1781,7 @@ function updateFilterStats(filteredCount, totalCount) {
     const tempFilter = document.getElementById('tempFilter')?.value || '';
     const supplierFilter = document.getElementById('supplierFilter')?.value || '';
     const statusFilter = document.getElementById('statusFilter')?.value || '';
+    const shipDateFilter = document.getElementById('shipDateFilter')?.value || '';
     
     let filtered = systemData.inventory;
     
@@ -1746,8 +1821,16 @@ function updateFilterStats(filteredCount, totalCount) {
         });
     }
     
+    // 5️⃣ 出貨日期過濾
+    if (shipDateFilter) {
+        filtered = filterByShipDate(filtered, shipDateFilter);
+    }
+    
     // ✅ 更新統計資訊
     updateFilterStats(filtered.length, systemData.inventory.length);
+    
+    // ✅ 更新日期篩選資訊
+    updateDateFilterInfo(shipDateFilter);
     
     // 渲染表格
     tbody.innerHTML = filtered.map(item => {
@@ -1767,6 +1850,13 @@ function updateFilterStats(filteredCount, totalCount) {
             statusText = '🟡 低於中低點';
         }
         
+        // ✅ 出貨日期標記（如果是今天或已逾期，特別標示）
+        let shipDateDisplay = item.shipDate || '';
+        const shipDateClass = getShipDateClass(item.shipDate);
+        if (shipDateClass) {
+            shipDateDisplay = `<span style="${shipDateClass}">${item.shipDate || ''}</span>`;
+        }
+        
         return `
             <tr>
                 <td>${item.sku || ''}</td>
@@ -1781,7 +1871,7 @@ function updateFilterStats(filteredCount, totalCount) {
                 <td>${item.acceptDate || ''}</td>
                 <td>${item.acceptDays || 0}</td>
                 <td>${item.validDays || 0}</td>
-                <td>${item.shipDate || ''}</td>
+                <td>${shipDateDisplay}</td>
                 <td>${item.supplier || ''}</td>
                 <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'safetyStock')">${safetyStock}</td>
                 <td class="editable-cell" onclick="editCell(this, '${item.sku}', 'midLowPoint')">${midLowPoint}</td>
@@ -1808,6 +1898,136 @@ function updateFilterStats(filteredCount, totalCount) {
         `;
     }
 }
+
+// ✅ 新增：出貨日期篩選邏輯
+function filterByShipDate(items, filterType) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // 顯示/隱藏自訂日期範圍
+    const customDateRange = document.getElementById('customDateRange');
+    if (customDateRange) {
+        customDateRange.style.display = filterType === 'custom' ? 'block' : 'none';
+    }
+    
+    return items.filter(item => {
+        if (!item.shipDate) return false;
+        
+        const shipDate = parseDate(item.shipDate);
+        if (!shipDate) return false;
+        
+        switch(filterType) {
+            case 'today':
+                return isSameDay(shipDate, today);
+                
+            case 'tomorrow':
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                return isSameDay(shipDate, tomorrow);
+                
+            case 'week':
+                const weekEnd = new Date(today);
+                weekEnd.setDate(weekEnd.getDate() + 7);
+                return shipDate >= today && shipDate <= weekEnd;
+                
+            case 'month':
+                const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                return shipDate >= today && shipDate <= monthEnd;
+                
+            case 'overdue':
+                return shipDate < today;
+                
+            case 'custom':
+                const startDate = document.getElementById('startDate')?.value;
+                const endDate = document.getElementById('endDate')?.value;
+                
+                if (!startDate && !endDate) return true;
+                
+                const start = startDate ? new Date(startDate) : new Date('1900-01-01');
+                const end = endDate ? new Date(endDate) : new Date('2100-12-31');
+                
+                return shipDate >= start && shipDate <= end;
+                
+            default:
+                return true;
+        }
+    });
+}
+
+// ✅ 新增：解析日期字串
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    
+    // 處理 YYYY/M/D 格式
+    if (typeof dateStr === 'string' && dateStr.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+        const parts = dateStr.split('/');
+        return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    
+    // 處理 Date 物件
+    if (dateStr instanceof Date) {
+        return dateStr;
+    }
+    
+    // 嘗試一般解析
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+// ✅ 新增：判斷是否為同一天
+function isSameDay(date1, date2) {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+}
+
+// ✅ 新增：取得出貨日期樣式
+function getShipDateClass(shipDateStr) {
+    if (!shipDateStr) return '';
+    
+    const shipDate = parseDate(shipDateStr);
+    if (!shipDate) return '';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (shipDate < today) {
+        return 'color: #dc3545; font-weight: bold;'; // 已逾期：紅色
+    } else if (isSameDay(shipDate, today)) {
+        return 'color: #ffc107; font-weight: bold;'; // 今天：黃色
+    }
+    
+    return '';
+}
+
+// ✅ 新增：更新日期篩選資訊
+function updateDateFilterInfo(filterType) {
+    const dateFilterInfo = document.getElementById('dateFilterInfo');
+    if (!dateFilterInfo) return;
+    
+    const filterNames = {
+        'today': '📌 今天出貨',
+        'tomorrow': '➡️ 明天出貨',
+        'week': '📆 本週出貨',
+        'month': '📅 本月出貨',
+        'overdue': '⚠️ 已逾期',
+        'custom': '🔧 自訂日期範圍'
+    };
+    
+    if (filterType && filterNames[filterType]) {
+        dateFilterInfo.textContent = `| 篩選: ${filterNames[filterType]}`;
+    } else {
+        dateFilterInfo.textContent = '';
+    }
+}
+
+// ✅ 新增：清除自訂日期
+function clearCustomDate() {
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    filterInventory();
+}
+
 
         
         function addNewInventory() {
