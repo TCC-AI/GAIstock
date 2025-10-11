@@ -2946,13 +2946,13 @@ function sendReplenishmentEmail(isTest = false) {
         return;
     }
     
-    // 顯示載入中
+    // ✅ 改用新的函數名稱
     const loadingMsg = isTest ? '正在寄送測試補單...' : '正在寄送補單給廠商...';
-    showLoading(loadingMsg);
+    showEmailLoading(loadingMsg);
     
     callAPI('sendReplenishmentEmail', { isTest: isTest })
         .then(result => {
-            hideLoading();
+            hideEmailLoading(); // ✅ 改用新的函數名稱
             
             if (result.status === 'success') {
                 let message = `✅ 補單寄發完成！\n\n`;
@@ -2968,21 +2968,21 @@ function sendReplenishmentEmail(isTest = false) {
                 }
                 
                 alert(message);
-                
-                // 重新載入補單建議
                 loadReplenishments();
             } else {
                 alert('❌ 寄送失敗：' + result.message);
             }
         })
         .catch(error => {
-            hideLoading();
+            hideEmailLoading(); // ✅ 改用新的函數名稱
             alert('❌ 寄送失敗：' + error.message);
         });
 }
 
-// 輔助函數：顯示載入中
-function showLoading(message) {
+
+
+// ✅ 修改後：改名為 showEmailLoading
+function showEmailLoading(message) {
     const loadingDiv = document.createElement('div');
     loadingDiv.id = 'emailLoadingOverlay';
     loadingDiv.style.cssText = `
@@ -2999,22 +2999,21 @@ function showLoading(message) {
     `;
     loadingDiv.innerHTML = `
         <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
-            <div class="spinner-border text-primary" role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
-            <p style="margin-top: 15px; font-size: 16px;">${message}</p>
+            <div class="spinner" style="margin: 0 auto 15px;"></div>
+            <p style="margin-top: 15px; font-size: 16px; color: #333;">${message || '處理中...'}</p>
         </div>
     `;
     document.body.appendChild(loadingDiv);
 }
 
-// 輔助函數：隱藏載入中
-function hideLoading() {
+// ✅ 修改後：改名為 hideEmailLoading
+function hideEmailLoading() {
     const loadingDiv = document.getElementById('emailLoadingOverlay');
     if (loadingDiv) {
         loadingDiv.remove();
     }
 }
+
 
         
         function editCell(cell, sku, field) {
