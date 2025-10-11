@@ -5,6 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAI【客戶託收託運】暨【庫存水平】數據管理系統</title>
     <style>
+        /* ✅ 修改後：支援雙排設計 */
+.dashboard-grid {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* 上排：3 個 KPI 卡片 */
+.dashboard-grid.top-row {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* 下排：1 個警報卡 + 1 張圖片 */
+.dashboard-grid.bottom-row {
+    grid-template-columns: 2fr 1fr; /* 警報卡佔 2/3，圖片佔 1/3 */
+    align-items: stretch; /* 確保兩個元素高度一致 */
+}
+
+/* 圖片卡片樣式 */
+.image-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.image-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.image-card img {
+    max-width: 100%;
+    width: 350px;
+    height: 350px;
+    object-fit: contain; /* 保持圖片比例 */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-card .card-title {
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.1em;
+    color: #667eea;
+    line-height: 1.5;
+}
+
+/* 響應式設計：小螢幕時改為單欄 */
+@media (max-width: 768px) {
+    .dashboard-grid.top-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-grid.bottom-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .image-card img {
+        width: 100%;
+        max-width: 350px;
+        height: auto;
+    }
+}
+
+/* 平板尺寸優化 */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .dashboard-grid.top-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .dashboard-grid.bottom-row {
+        grid-template-columns: 1fr;
+    }
+}
+
         /* 補單管理表格樣式 */
 #replenishmentTable {
     font-size: 0.85em;
@@ -789,37 +870,55 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         
         <div class="content">
             <!-- 主控台 -->
-            <div id="dashboard" class="tab-content active">
-                <h2>即時營運總覽</h2>
-                <div style="text-align: right; margin-bottom: 20px;">
-                    <!-- ✅ 新增：全域重新整理按鈕 -->
+<!-- 主控台 -->
+<div id="dashboard" class="tab-content active">
+    <h2>即時營運總覽</h2>
+    <div style="text-align: right; margin-bottom: 20px;">
+        <!-- ✅ 全域重新整理按鈕 -->
         <button class="btn btn-primary" onclick="refreshAllData()" data-permission="s2">
             🔄 重新整理所有資料
         </button>
         <button class="btn btn-warning" onclick="refreshDashboard()" data-permission="s2">
             🔄 重新整理主控台
         </button>
-                    <span style="margin-left: 10px; color: #666;" id="lastUpdate">最後更新: --</span>
-                </div>
-                
-                <div class="dashboard-grid" id="dashboardKPIs">
-                    <!-- KPI 卡片將動態載入 -->
-                </div>
-                
-                <div id="dashboardActions" data-permission="s2">
-                    <h3>系統快速操作</h3>
-                    <div style="margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="runFullAnalysis()" data-permission="s3">🚀 執行完整分析流程</button>
-                        <button class="btn btn-success" onclick="generateAllSuggestions()" data-permission="s3">📋 產生所有建議</button>
-                        <button class="btn btn-secondary" onclick="exportDashboard()" data-permission="s2">📥 匯出儀表板</button>
-                    </div>
-                </div>
-                
-                <h3 style="margin-top: 30px;">系統警報與通知</h3>
-                <div id="alertsContainer">
-                    <!-- 警報將動態載入 -->
-                </div>
+        <span style="margin-left: 10px; color: #666;" id="lastUpdate">最後更新: --</span>
+    </div>
+    
+    <!-- ✅ 上排：3 個 KPI 卡片 -->
+    <div class="dashboard-grid top-row" id="dashboardKPIsTop">
+        <!-- KPI 卡片將動態載入 -->
+    </div>
+    
+    <!-- ✅ 下排：1 個警報卡 + 1 張圖片 -->
+    <div class="dashboard-grid bottom-row">
+        <div id="dashboardKPIsBottom">
+            <!-- 低庫存警報卡片將動態載入 -->
+        </div>
+        
+        <!-- ✅ 新增：圖片卡片 -->
+        <div class="image-card">
+            <div class="card-title">
+                GAI商品庫存計算中心數位主任<br>Elon
             </div>
+            <img src="S1.png" alt="GAI商品庫存計算中心數位主任 Elon">
+        </div>
+    </div>
+    
+    <div id="dashboardActions" data-permission="s2">
+        <h3>系統快速操作</h3>
+        <div style="margin-top: 20px;">
+            <button class="btn btn-primary" onclick="runFullAnalysis()" data-permission="s3">🚀 執行完整分析流程</button>
+            <button class="btn btn-success" onclick="generateAllSuggestions()" data-permission="s3">📋 產生所有建議</button>
+            <button class="btn btn-secondary" onclick="exportDashboard()" data-permission="s2">📥 匯出儀表板</button>
+        </div>
+    </div>
+    
+    <h3 style="margin-top: 30px;">系統警報與通知</h3>
+    <div id="alertsContainer">
+        <!-- 警報將動態載入 -->
+    </div>
+</div>
+
             
             <!-- 即時庫存 -->
             <div id="inventory" class="tab-content">
@@ -1936,53 +2035,64 @@ function refreshAllData() {
 
 
         
-        function updateDashboard(data) {
-            const container = document.getElementById('dashboardKPIs');
+function updateDashboard(data) {
+    // ✅ 上排：3 個 KPI 卡片
+    const topContainer = document.getElementById('dashboardKPIsTop');
+    if (topContainer) {
+        topContainer.innerHTML = `
+            <div class="card">
+                <div class="card-title">❄️ 冷凍庫使用率</div>
+                <div class="kpi-value">${data.freezerUsage || 0}%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${data.freezerUsage || 0}%">${data.freezerUsage || 0}%</div>
+                </div>
+                <div class="kpi-label">3座冷凍庫 | 可用: ${data.freezerAvailable || 0}個棧板位</div>
+            </div>
             
-            container.innerHTML = `
-                <div class="card">
-                    <div class="card-title">❄️ 冷凍庫使用率</div>
-                    <div class="kpi-value">${data.freezerUsage || 0}%</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${data.freezerUsage || 0}%">${data.freezerUsage || 0}%</div>
-                    </div>
-                    <div class="kpi-label">3座冷凍庫 | 可用: ${data.freezerAvailable || 0}個棧板位</div>
+            <div class="card">
+                <div class="card-title">🧊 冷藏庫使用率</div>
+                <div class="kpi-value">${data.coolerUsage || 0}%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${data.coolerUsage || 0}%">${data.coolerUsage || 0}%</div>
                 </div>
-                
-                <div class="card">
-                    <div class="card-title">🧊 冷藏庫使用率</div>
-                    <div class="kpi-value">${data.coolerUsage || 0}%</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${data.coolerUsage || 0}%">${data.coolerUsage || 0}%</div>
-                    </div>
-                    <div class="kpi-label">7座冷藏庫 | 可用: ${data.coolerAvailable || 0}個棧板位</div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-title">📦 總SKU數</div>
-                    <div class="kpi-value">${data.totalSKUs || 0}</div>
-                    <div class="kpi-label">個品項</div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-title">⚠️ 低庫存警報</div>
-                    <div class="kpi-value">${data.lowStockCount || 0}</div>
-                    <div class="kpi-label">個品項需補貨</div>
-                </div>
-            `;
+                <div class="kpi-label">7座冷藏庫 | 可用: ${data.coolerAvailable || 0}個棧板位</div>
+            </div>
             
-            // 更新警報
-            const alertsContainer = document.getElementById('alertsContainer');
-            if (data.alerts && data.alerts.length > 0) {
-                alertsContainer.innerHTML = data.alerts.map(alert => `
-                    <div class="alert-card" style="margin-bottom: 10px; padding: 15px;">
-                        <strong>${alert.type}:</strong> ${alert.message}
-                    </div>
-                `).join('');
-            } else {
-                alertsContainer.innerHTML = '<p style="color: #666;">目前無警報</p>';
-            }
+            <div class="card">
+                <div class="card-title">📦 總SKU數</div>
+                <div class="kpi-value">${data.totalSKUs || 0}</div>
+                <div class="kpi-label">個品項</div>
+            </div>
+        `;
+    }
+    
+    // ✅ 下排：低庫存警報卡片
+    const bottomContainer = document.getElementById('dashboardKPIsBottom');
+    if (bottomContainer) {
+        bottomContainer.innerHTML = `
+            <div class="card alert-card">
+                <div class="card-title">⚠️ 低庫存警報</div>
+                <div class="kpi-value">${data.lowStockCount || 0}</div>
+                <div class="kpi-label">個品項需補貨</div>
+            </div>
+        `;
+    }
+    
+    // 更新警報
+    const alertsContainer = document.getElementById('alertsContainer');
+    if (alertsContainer) {
+        if (data.alerts && data.alerts.length > 0) {
+            alertsContainer.innerHTML = data.alerts.map(alert => `
+                <div class="alert-card" style="margin-bottom: 10px; padding: 15px;">
+                    <strong>${alert.type}:</strong> ${alert.message}
+                </div>
+            `).join('');
+        } else {
+            alertsContainer.innerHTML = '<p style="color: #666;">目前無警報</p>';
         }
+    }
+}
+
         
         // === 庫存管理功能 ===
 // ✅ 修改後：重新整理時同步更新快取
