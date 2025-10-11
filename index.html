@@ -1524,6 +1524,30 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         // 系統配置
         let GAS_URL = 'https://script.google.com/macros/s/AKfycbyB5wfWPGqtYVPWQQj_RZOPYvYjtq_E3MPQh16riXpoj0FMTZ8ky079ZxPyg3hOYGPp/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
+        // ========== 系統配置 ==========
+const CONFIG = {
+    WAREHOUSES: {
+        FREEZER: { 
+            count: 3, 
+            name: '冷凍庫'
+        },
+        COOLER: { 
+            count: 7, 
+            name: '冷藏庫'
+        }
+    }
+};
+
+// ========== 全域變數 ==========
+let currentUser = null;
+let currentData = {
+    inventory: [],
+    demands: [],
+    predictions: [],
+    replenishments: [],
+    capacity: { freezers: [], coolers: [] }
+};
+
         
         // 用戶會話管理
         let currentUser = null;
@@ -2134,9 +2158,18 @@ function refreshAllData() {
 function updateDashboard(data) {
     console.log('更新儀表板資料:', data);
     
+    // ✅ 確保 data 存在
+    if (!data) {
+        console.error('儀表板資料為空');
+        return;
+    }
+    
     // ✅ 上排：3 個 KPI 卡片 + 1 張圖片
     const topContainer = document.getElementById('dashboardKPIsTop');
     if (topContainer) {
+        const freezerCount = CONFIG.WAREHOUSES.FREEZER.count || 8;
+        const coolerCount = CONFIG.WAREHOUSES.COOLER.count || 5;
+        
         topContainer.innerHTML = `
             <div class="card">
                 <div class="card-title">❄️ 冷凍庫使用率</div>
@@ -2144,7 +2177,7 @@ function updateDashboard(data) {
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: ${data.freezerUsage || 0}%">${data.freezerUsage || 0}%</div>
                 </div>
-                <div class="kpi-label">${CONFIG.WAREHOUSES.FREEZER.count}座冷凍庫 | 可用: ${data.freezerAvailable || 0}個棧板位</div>
+                <div class="kpi-label">${freezerCount}座冷凍庫 | 可用: ${data.freezerAvailable || 0}個棧板位</div>
             </div>
             
             <div class="card">
@@ -2153,7 +2186,7 @@ function updateDashboard(data) {
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: ${data.coolerUsage || 0}%">${data.coolerUsage || 0}%</div>
                 </div>
-                <div class="kpi-label">${CONFIG.WAREHOUSES.COOLER.count}座冷藏庫 | 可用: ${data.coolerAvailable || 0}個棧板位</div>
+                <div class="kpi-label">${coolerCount}座冷藏庫 | 可用: ${data.coolerAvailable || 0}個棧板位</div>
             </div>
             
             <div class="card">
@@ -2191,7 +2224,7 @@ function updateDashboard(data) {
         `;
     }
     
-    // 更新警報
+    // ✅ 更新警報
     const alertsContainer = document.getElementById('alertsContainer');
     if (alertsContainer) {
         if (data.alerts && data.alerts.length > 0) {
@@ -2201,16 +2234,47 @@ function updateDashboard(data) {
                 </div>
             `).join('');
         } else {
-            alertsContainer.innerHTML = '<p style="color: #666;">目前無警報</p>';
+            alertsContainer.innerHTML = '<p style="color: #666;">✅ 目前無警報</p>';
         }
     }
     
-    // 更新最後更新時間
+    // ✅ 更新最後更新時間
     const lastUpdateElement = document.getElementById('lastUpdate');
     if (lastUpdateElement) {
         lastUpdateElement.textContent = '最後更新: ' + new Date().toLocaleString('zh-TW');
     }
 }
+
+// ✅ 產生趨勢標籤
+function generateTrendBadge(trend) {
+    if (!trend) return '';
+    
+    const { direction, percentage, lastMonth, currentMonth } = trend;
+    
+    let badgeClass = 'trend-neutral';
+    let arrow = '➡️';
+    let text = '持平';
+    
+    if (direction === 'up') {
+        badgeClass = 'trend-up';
+        arrow = '📈';
+        text = `較上月增加 ${percentage}%`;
+    } else if (direction === 'down') {
+        badgeClass = 'trend-down';
+        arrow = '📉';
+        text = `較上月減少 ${percentage}%`;
+    }
+    
+    return `
+        <div class="trend-badge ${badgeClass}">
+            ${arrow} ${text}
+        </div>
+        <div style="margin-top: 8px; font-size: 0.85em; color: rgba(255,255,255,0.8);">
+            上月: ${lastMonth} kg | 本月: ${currentMonth} kg
+        </div>
+    `;
+}
+
 
 // ✅ 新增：產生趨勢標籤
 function generateTrendBadge(trend) {
