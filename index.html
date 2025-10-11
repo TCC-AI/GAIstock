@@ -5,93 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAI【客戶託收託運】暨【庫存水平】數據管理系統</title>
-    <!-- ✅ 新增 Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
     <style>
-        /* ========== ✅ 新增：圖表容器樣式 ========== */
-.chart-container {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-top: 24px;
-}
-
-.chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.chart-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1a1a1a;
-}
-
-.chart-trend {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.chart-trend.up {
-    background: #fee;
-    color: #c00;
-}
-
-.chart-trend.down {
-    background: #efe;
-    color: #0a0;
-}
-
-.chart-trend.stable {
-    background: #f0f0f0;
-    color: #666;
-}
-
-.chart-canvas {
-    position: relative;
-    height: 300px;
-    margin-top: 16px;
-}
-
-.chart-stats {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #e0e0e0;
-}
-
-.chart-stat {
-    text-align: center;
-}
-
-.chart-stat-label {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 4px;
-}
-
-.chart-stat-value {
-    font-size: 20px;
-    font-weight: 600;
-    color: #1a1a1a;
-}
-
-.chart-stat-unit {
-    font-size: 12px;
-    color: #999;
-    margin-left: 4px;
-}
-
 /* ✅ 修改後：支援上排 4 個 + 下排 2 個 */
 .dashboard-grid {
     display: grid;
@@ -1011,44 +925,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
             <button class="btn btn-secondary" onclick="exportDashboard()" data-permission="s2">📥 匯出儀表板</button>
         </div>
     </div>
-    <!-- ========== ✅ 新增：碳排放趨勢圖表 ========== -->
-<div class="chart-container">
-    <div class="chart-header">
-        <div class="chart-title">📊 溫室氣體排放趨勢（過去6個月）</div>
-        <div class="chart-trend" id="chartTrend">
-            <span id="trendIcon">📊</span>
-            <span id="trendText">分析中...</span>
-        </div>
-    </div>
     
-    <div class="chart-canvas">
-        <canvas id="carbonChart"></canvas>
-    </div>
-    
-    <div class="chart-stats">
-        <div class="chart-stat">
-            <div class="chart-stat-label">6個月平均</div>
-            <div class="chart-stat-value">
-                <span id="chartAverage">-</span>
-                <span class="chart-stat-unit">kg CO₂e</span>
-            </div>
-        </div>
-        <div class="chart-stat">
-            <div class="chart-stat-label">最高值</div>
-            <div class="chart-stat-value">
-                <span id="chartMax">-</span>
-                <span class="chart-stat-unit">kg CO₂e</span>
-            </div>
-        </div>
-        <div class="chart-stat">
-            <div class="chart-stat-label">最低值</div>
-            <div class="chart-stat-value">
-                <span id="chartMin">-</span>
-                <span class="chart-stat-unit">kg CO₂e</span>
-            </div>
-        </div>
-    </div>
-</div>
     <h3 style="margin-top: 30px;">系統警報與通知</h3>
     <div id="alertsContainer">
         <!-- 警報將動態載入 -->
@@ -1513,7 +1390,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
                             </div>
                             <div class="form-group">
                                 <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbwopmYG67CrsjRYglfEpFDcPPPlYcZGQ_zhI6WgBx2IxQ6qvh9qZci0UkMDtLZS8YYj/exec">
+                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbzhOTG1lvysVJDrpStKV3yKj3vS_W3J8o6L6jTipqmhODqQFEB0x2MCXa8kxpwKwwPf/exec">
                             </div>
                             <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
                             <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
@@ -1563,10 +1440,8 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     
     <script>
         // 系統配置
-        let GAS_URL = 'https://script.google.com/macros/s/AKfycbwopmYG67CrsjRYglfEpFDcPPPlYcZGQ_zhI6WgBx2IxQ6qvh9qZci0UkMDtLZS8YYj/exec';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbzhOTG1lvysVJDrpStKV3yKj3vS_W3J8o6L6jTipqmhODqQFEB0x2MCXa8kxpwKwwPf/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
-        let carbonChart = null; // ✅ 全域變數儲存圖表實例
-
         
         // 用戶會話管理
         let currentUser = null;
@@ -2245,138 +2120,6 @@ function updateDashboard(data) {
             alertsContainer.innerHTML = '<p style="color: #666;">目前無警報</p>';
         }
     }
-    // ✅ 新增：初始化圖表
-if (data.carbonHistory) {
-    initCarbonChart(data.carbonHistory);
-}
-
-}
-// ========== ✅ 新增：初始化圖表 ==========
-function initCarbonChart(historyData) {
-    if (!historyData || !historyData.labels || historyData.labels.length === 0) {
-        console.log('無歷史資料');
-        return;
-    }
-    
-    const ctx = document.getElementById('carbonChart');
-    if (!ctx) return;
-    
-    // 銷毀舊圖表
-    if (carbonChart) {
-        carbonChart.destroy();
-    }
-    
-    // 計算統計值
-    const validValues = historyData.values.filter(v => v > 0);
-    const maxValue = validValues.length > 0 ? Math.max(...validValues) : 0;
-    const minValue = validValues.length > 0 ? Math.min(...validValues) : 0;
-    
-    // 更新統計顯示
-    document.getElementById('chartAverage').textContent = historyData.average || 0;
-    document.getElementById('chartMax').textContent = maxValue;
-    document.getElementById('chartMin').textContent = minValue;
-    
-    // 更新趨勢顯示
-    const trendElement = document.getElementById('chartTrend');
-    const trendIcon = document.getElementById('trendIcon');
-    const trendText = document.getElementById('trendText');
-    
-    trendElement.className = 'chart-trend ' + historyData.trend;
-    
-    switch(historyData.trend) {
-        case 'up':
-            trendIcon.textContent = '📈';
-            trendText.textContent = '排放量上升';
-            break;
-        case 'down':
-            trendIcon.textContent = '📉';
-            trendText.textContent = '排放量下降';
-            break;
-        default:
-            trendIcon.textContent = '📊';
-            trendText.textContent = '排放量穩定';
-    }
-    
-    // 建立圖表
-    carbonChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: historyData.labels,
-            datasets: [{
-                label: '月碳排累計',
-                data: historyData.values,
-                borderColor: '#4CAF50',
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                borderWidth: 3,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                pointBackgroundColor: '#4CAF50',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2
-            }, {
-                label: '平均值',
-                data: Array(historyData.labels.length).fill(historyData.average),
-                borderColor: '#FF9800',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                fill: false,
-                pointRadius: 0,
-                pointHoverRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 15,
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
-                    titleFont: {
-                        size: 14
-                    },
-                    bodyFont: {
-                        size: 13
-                    },
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': ' + context.parsed.y + ' kg CO₂e';
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return value + ' kg';
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
 }
 
 // ✅ 新增：產生趨勢標籤
