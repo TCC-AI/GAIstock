@@ -5,29 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAI【客戶託收託運】暨【庫存水平】數據管理系統</title>
     <style>
-        /* ✅ 修改後：支援雙排設計 */
+/* ✅ 修改後：支援上排 4 個 + 下排 2 個 */
 .dashboard-grid {
     display: grid;
     gap: 20px;
     margin-bottom: 30px;
 }
 
-/* 上排：3 個 KPI 卡片 */
+/* 上排：3 個 KPI + 1 張圖片 */
 .dashboard-grid.top-row {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
 }
 
-/* 下排：1 個警報卡 + 1 張圖片 */
+/* 下排：2 個警報卡 */
 .dashboard-grid.bottom-row {
-    grid-template-columns: 2fr 1fr; /* 警報卡佔 2/3，圖片佔 1/3 */
-    align-items: stretch; /* 確保兩個元素高度一致 */
+    grid-template-columns: repeat(2, 1fr);
 }
 
 /* 圖片卡片樣式 */
 .image-card {
     background: white;
     border-radius: 10px;
-    padding: 20px;
+    padding: 15px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
@@ -43,19 +42,44 @@
 
 .image-card img {
     max-width: 100%;
-    width: 250px;
-    height: 250px;
-    object-fit: contain; /* 保持圖片比例 */
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .image-card .card-title {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     text-align: center;
-    font-size: 1.1em;
+    font-size: 0.95em;
     color: #667eea;
-    line-height: 1.5;
+    line-height: 1.4;
+}
+
+/* 趨勢標籤樣式 */
+.trend-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.trend-up {
+    background: #fee;
+    color: #c33;
+}
+
+.trend-down {
+    background: #efe;
+    color: #3c3;
+}
+
+.trend-neutral {
+    background: #f5f5f5;
+    color: #666;
 }
 
 /* 響應式設計：小螢幕時改為單欄 */
@@ -69,9 +93,8 @@
     }
     
     .image-card img {
-        width: 100%;
-        max-width: 350px;
-        height: auto;
+        width: 180px;
+        height: 180px;
     }
 }
 
@@ -85,6 +108,7 @@
         grid-template-columns: 1fr;
     }
 }
+
 
         /* 補單管理表格樣式 */
 #replenishmentTable {
@@ -871,10 +895,10 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         <div class="content">
             <!-- 主控台 -->
 <!-- 主控台 -->
+<!-- 主控台 -->
 <div id="dashboard" class="tab-content active">
     <h2>即時營運總覽</h2>
     <div style="text-align: right; margin-bottom: 20px;">
-        <!-- ✅ 全域重新整理按鈕 -->
         <button class="btn btn-primary" onclick="refreshAllData()" data-permission="s2">
             🔄 重新整理所有資料
         </button>
@@ -884,25 +908,31 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         <span style="margin-left: 10px; color: #666;" id="lastUpdate">最後更新: --</span>
     </div>
     
-    <!-- ✅ 上排：3 個 KPI 卡片 -->
+    <!-- ✅ 上排：3 個 KPI 卡片 + 1 張圖片 -->
     <div class="dashboard-grid top-row" id="dashboardKPIsTop">
         <!-- KPI 卡片將動態載入 -->
     </div>
     
-    <!-- ✅ 下排：1 個警報卡 + 1 張圖片 -->
-    <div class="dashboard-grid bottom-row">
-        <div id="dashboardKPIsBottom">
-            <!-- 低庫存警報卡片將動態載入 -->
-        </div>
-        
-        <!-- ✅ 新增：圖片卡片 -->
-        <div class="image-card">
-            <div class="card-title">
-                GAI商品庫存計算中心數位主任<br>Elon
-            </div>
-            <img src="S1.png" alt="GAI商品庫存計算中心數位主任 Elon">
+    <!-- ✅ 下排：2 個警報卡 -->
+    <div class="dashboard-grid bottom-row" id="dashboardKPIsBottom">
+        <!-- 警報卡片將動態載入 -->
+    </div>
+    
+    <div id="dashboardActions" data-permission="s2">
+        <h3>系統快速操作</h3>
+        <div style="margin-top: 20px;">
+            <button class="btn btn-primary" onclick="runFullAnalysis()" data-permission="s3">🚀 執行完整分析流程</button>
+            <button class="btn btn-success" onclick="generateAllSuggestions()" data-permission="s3">📋 產生所有建議</button>
+            <button class="btn btn-secondary" onclick="exportDashboard()" data-permission="s2">📥 匯出儀表板</button>
         </div>
     </div>
+    
+    <h3 style="margin-top: 30px;">系統警報與通知</h3>
+    <div id="alertsContainer">
+        <!-- 警報將動態載入 -->
+    </div>
+</div>
+
     
     <div id="dashboardActions" data-permission="s2">
         <h3>系統快速操作</h3>
@@ -1376,7 +1406,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
                             </div>
                             <div class="form-group">
                                 <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbxNMwOAABzEJJBDlRupBx8eIOAAILhsnG_RIm4W3aZEiegAhEENjdKtVwqUly8bY3qY/exec">
+                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbwfnACN_a_VPuZTkByl_SK4Huvi2iHxqy4vm1vp3N2vg9JP6U0I6VTNuUZlE6d6q0qS/exec">
                             </div>
                             <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
                             <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
@@ -1426,7 +1456,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     
     <script>
         // 系統配置
-        let GAS_URL = 'https://script.google.com/macros/s/AKfycbxNMwOAABzEJJBDlRupBx8eIOAAILhsnG_RIm4W3aZEiegAhEENjdKtVwqUly8bY3qY/exec';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbwfnACN_a_VPuZTkByl_SK4Huvi2iHxqy4vm1vp3N2vg9JP6U0I6VTNuUZlE6d6q0qS/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
         // 用戶會話管理
@@ -2033,10 +2063,8 @@ function refreshAllData() {
     });
 }
 
-
-        
 function updateDashboard(data) {
-    // ✅ 上排：3 個 KPI 卡片
+    // ✅ 上排：3 個 KPI 卡片 + 1 張圖片
     const topContainer = document.getElementById('dashboardKPIsTop');
     if (topContainer) {
         topContainer.innerHTML = `
@@ -2063,17 +2091,32 @@ function updateDashboard(data) {
                 <div class="kpi-value">${data.totalSKUs || 0}</div>
                 <div class="kpi-label">個品項</div>
             </div>
+            
+            <div class="image-card">
+                <div class="card-title">GAI商品庫存計算數位主任<br>Elon</div>
+                <img src="S1.png" alt="GAI商品庫存計算數位主任 Elon">
+            </div>
         `;
     }
     
-    // ✅ 下排：低庫存警報卡片
+    // ✅ 下排：2 個警報卡
     const bottomContainer = document.getElementById('dashboardKPIsBottom');
     if (bottomContainer) {
+        // 計算趨勢
+        const trendHtml = generateTrendBadge(data.carbonTrend);
+        
         bottomContainer.innerHTML = `
             <div class="card alert-card">
                 <div class="card-title">⚠️ 低庫存警報</div>
                 <div class="kpi-value">${data.lowStockCount || 0}</div>
                 <div class="kpi-label">個品項需補貨</div>
+            </div>
+            
+            <div class="card" style="background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%); color: white;">
+                <div class="card-title" style="color: white;">📊 報廢食材(本月累計)-溫室氣體排放量（CO₂e）</div>
+                <div class="kpi-value">${data.carbonEmission || 0}</div>
+                <div class="kpi-label" style="color: rgba(255,255,255,0.9);">kg CO₂e</div>
+                ${trendHtml}
             </div>
         `;
     }
@@ -2092,6 +2135,37 @@ function updateDashboard(data) {
         }
     }
 }
+
+// ✅ 新增：產生趨勢標籤
+function generateTrendBadge(trend) {
+    if (!trend) return '';
+    
+    const { direction, percentage, lastMonth, currentMonth } = trend;
+    
+    let badgeClass = 'trend-neutral';
+    let arrow = '➡️';
+    let text = '持平';
+    
+    if (direction === 'up') {
+        badgeClass = 'trend-up';
+        arrow = '📈';
+        text = `較上月增加 ${percentage}%`;
+    } else if (direction === 'down') {
+        badgeClass = 'trend-down';
+        arrow = '📉';
+        text = `較上月減少 ${percentage}%`;
+    }
+    
+    return `
+        <div class="trend-badge ${badgeClass}">
+            ${arrow} ${text}
+        </div>
+        <div style="margin-top: 8px; font-size: 0.85em; color: rgba(255,255,255,0.8);">
+            上月: ${lastMonth} kg | 本月: ${currentMonth} kg
+        </div>
+    `;
+}
+
 
         
         // === 庫存管理功能 ===
