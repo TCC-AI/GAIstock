@@ -792,7 +792,13 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
             <div id="dashboard" class="tab-content active">
                 <h2>即時營運總覽</h2>
                 <div style="text-align: right; margin-bottom: 20px;">
-                    <button class="btn btn-warning" onclick="refreshDashboard()" data-permission="s2">🔄 重新整理</button>
+                    <!-- ✅ 新增：全域重新整理按鈕 -->
+        <button class="btn btn-primary" onclick="refreshAllData()" data-permission="s2">
+            🔄 重新整理所有資料
+        </button>
+        <button class="btn btn-warning" onclick="refreshDashboard()" data-permission="s2">
+            🔄 重新整理主控台
+        </button>
                     <span style="margin-left: 10px; color: #666;" id="lastUpdate">最後更新: --</span>
                 </div>
                 
@@ -1354,11 +1360,39 @@ document.addEventListener('DOMContentLoaded', function() {
         userLevel = savedLevel;
         showMainSystem();
         checkConnection();
-        refreshDashboard();
+        
+        // ✅ 新增：登入後預載入資料
+        preloadAllData().then(success => {
+            if (success) {
+                updateDashboard(systemData.dashboard);
+            }
+        });
+        
+        // ✅ 新增：每天自動重新整理一次（24小時）
+        setInterval(() => {
+            console.log('🔄 自動重新整理資料...');
+            preloadAllData().then(success => {
+                if (success) {
+                    // 如果當前在主控台，更新顯示
+                    const activeTab = document.querySelector('.tab-content.active');
+                    if (activeTab && activeTab.id === 'dashboard') {
+                        updateDashboard(systemData.dashboard);
+                    }
+                    
+                    // 顯示通知
+                    const lastUpdateEl = document.getElementById('lastUpdate');
+                    if (lastUpdateEl) {
+                        lastUpdateEl.textContent = `最後更新: ${systemData.lastUpdate.toLocaleString('zh-TW')}`;
+                    }
+                }
+            });
+        }, 24 * 60 * 60 * 1000); // 24 小時
+        
     } else {
         showLoginForm();
     }
 });
+
 
 
         // 顯示登入表單
@@ -1396,48 +1430,140 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // 處理登入
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const account = document.getElementById('loginAccount').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!account || !password) {
-                alert('請輸入帳號和密碼！');
-                return;
+// ✅ 修改後：登入成功後預載入資料
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const account = document.getElementById('loginAccount').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!account || !password) {
+        alert('請輸入帳號和密碼！');
+        return;
+    }
+    
+    showLoading();
+    
+    callAPI('login', { account, password })
+        .then(result => {
+            if (result.success) {
+                currentUser = {
+                    account: account,
+                    name: result.user.name || account,
+                    title: result.user.title || '',
+                    level: result.user.level || 's1'
+                };
+                userLevel = result.user.level || 's1';
+                
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                sessionStorage.setItem('userLevel', userLevel);
+                
+                showMainSystem();
+                
+                // ✅ 新增：預載入所有資料
+                preloadAllData().then(success => {
+                    if (success) {
+                        // 預載完成後，顯示主控台
+                        updateDashboard(systemData.dashboard);
+                        
+                        // 顯示最後更新時間
+                        const lastUpdateEl = document.getElementById('lastUpdate');
+                        if (lastUpdateEl) {
+                            lastUpdateEl.textContent = `最後更新: ${systemData.lastUpdate.toLocaleString('zh-TW')}`;
+                        }
+                    }
+                });
+            } else {
+                hideLoading();
+                alert(result.message || '登入失敗！');
             }
-            
-            showLoading();
-            
-            callAPI('login', {
-                account: account,
-                password: password
-            })
-            .then(result => {
-                if (result.success) {
-                    currentUser = {
-                        account: account,
-                        name: result.user.name || account,
-                        title: result.user.title || '',
-                        level: result.user.level || 's1'
-                    };
-                    userLevel = result.user.level || 's1';
-                    
-                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    sessionStorage.setItem('userLevel', userLevel);
-                    
-                    showMainSystem();
-                    checkConnection();
-                    refreshDashboard();
-                } else {
-                    alert(result.message || '登入失敗！');
-                }
-            })
-            .catch(error => {
-                console.error('Login error:', error);
-                alert('登入過程發生錯誤，請稍後再試！');
-            });
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Login error:', error);
+            alert('登入過程發生錯誤，請稍後再試！');
+        });
+}
+
+        // ✅ 新增：預載入所有資料
+async function preloadAllData() {
+    showLoading('正在載入系統資料，請稍候...');
+    
+    try {
+        console.log('🚀 開始預載入所有資料...');
+        
+        // 根據權限決定要載入哪些資料
+        const promises = [];
+        
+        // 1️⃣ 所有用戶都載入主控台
+        promises.push(
+            callAPI('getDashboard')
+                .then(data => {
+                    systemData.dashboard = data;
+                    console.log('✅ 主控台資料載入完成');
+                })
+        );
+        
+        // 2️⃣ s2 以上載入庫存
+        if (checkPermission('s2')) {
+            promises.push(
+                callAPI('getInventory')
+                    .then(data => {
+                        systemData.inventory = data.items || [];
+                        console.log(`✅ 庫存資料載入完成 (${systemData.inventory.length} 筆)`);
+                    })
+            );
         }
+        
+        // 3️⃣ s3 以上載入需求、預測、補單、倉容
+        if (checkPermission('s3')) {
+            promises.push(
+                callAPI('getDemands')
+                    .then(data => {
+                        systemData.demands = data.demands || [];
+                        console.log(`✅ 需求設定載入完成 (${systemData.demands.length} 筆)`);
+                    }),
+                
+                callAPI('getPredictions')
+                    .then(data => {
+                        systemData.predictions = data.predictions || [];
+                        console.log(`✅ 預測結果載入完成 (${systemData.predictions.length} 筆)`);
+                    }),
+                
+                callAPI('getReplenishments')
+                    .then(data => {
+                        systemData.replenishments = data.suggestions || [];
+                        console.log(`✅ 補單建議載入完成 (${systemData.replenishments.length} 筆)`);
+                    }),
+                
+                callAPI('getCapacity')
+                    .then(data => {
+                        systemData.capacity = data;
+                        console.log('✅ 倉容資料載入完成');
+                    })
+            );
+        }
+        
+        // 等待所有資料載入完成
+        await Promise.all(promises);
+        
+        // 記錄載入時間
+        systemData.lastUpdate = new Date();
+        systemData.isLoaded = true;
+        
+        hideLoading();
+        console.log('🎉 所有資料預載完成！', systemData);
+        
+        return true;
+        
+    } catch (error) {
+        hideLoading();
+        console.error('❌ 預載資料失敗:', error);
+        alert('部分資料載入失敗，將在切換頁面時重新載入\n錯誤訊息：' + error.message);
+        return false;
+    }
+}
+
 
         // 更新用戶資訊顯示
         function updateUserInfo() {
@@ -1569,17 +1695,21 @@ document.addEventListener('DOMContentLoaded', function() {
             return currentIndex >= requiredIndex;
         }
 
-        // 系統狀態
-        let systemData = {
-            inventory: [],
-            demands: [],
-            predictions: [],
-            replenishments: [],
-            capacity: {
-                freezers: [],
-                coolers: []
-            }
-        };
+                   // ✅ 修改後：新增完整的資料快取結構
+            let systemData = {
+                inventory: [],
+                demands: [],
+                predictions: [],
+                replenishments: [],
+                capacity: {
+                    freezers: [],
+                    coolers: []
+                },
+                dashboard: null,
+                lastUpdate: null,  // ✅ 新增：記錄最後更新時間
+                isLoaded: false    // ✅ 新增：標記資料是否已載入
+            };
+
         
         // 檢查連接狀態
         function checkConnection() {
@@ -1631,38 +1761,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 載入標籤資料
-        function loadTabData(tabName) {
-            switch(tabName) {
-                case 'dashboard':
-                    refreshDashboard();
-                    break;
-                case 'inventory':
-                    if (checkPermission('s2')) {
-                        refreshInventory();
-                    }
-                    break;
-                case 'demand':
-                    if (checkPermission('s3')) {
-                        loadDemands();
-                    }
-                    break;
-                case 'prediction':
-                    if (checkPermission('s3')) {
-                        loadPredictions();
-                    }
-                    break;
-                case 'replenishment':
-                    if (checkPermission('s3')) {
-                        loadReplenishments();
-                    }
-                    break;
-                case 'capacity':
-                    if (checkPermission('s3')) {
-                        loadCapacity();
-                    }
-                    break;
+ // ✅ 修改後：優先使用快取資料
+function loadTabData(tabName) {
+    switch(tabName) {
+        case 'dashboard':
+            if (systemData.dashboard) {
+                updateDashboard(systemData.dashboard);
+            } else {
+                refreshDashboard();
             }
-        }
+            break;
+            
+        case 'inventory':
+            if (checkPermission('s2')) {
+                if (systemData.inventory.length > 0) {
+                    displayInventory();
+                } else {
+                    refreshInventory();
+                }
+            }
+            break;
+            
+        case 'demand':
+            if (checkPermission('s3')) {
+                if (systemData.demands.length > 0) {
+                    displayDemands();
+                } else {
+                    loadDemands();
+                }
+            }
+            break;
+            
+        case 'prediction':
+            if (checkPermission('s3')) {
+                if (systemData.predictions.length > 0) {
+                    displayPredictions();
+                } else {
+                    loadPredictions();
+                }
+            }
+            break;
+            
+        case 'replenishment':
+            if (checkPermission('s3')) {
+                if (systemData.replenishments.length > 0) {
+                    displayReplenishments();
+                } else {
+                    loadReplenishments();
+                }
+            }
+            break;
+            
+        case 'capacity':
+            if (checkPermission('s3')) {
+                if (systemData.capacity && systemData.capacity.freezers && systemData.capacity.freezers.length > 0) {
+                    displayCapacity();
+                } else {
+                    loadCapacity();
+                }
+            }
+            break;
+    }
+}
+
         
         // 顯示載入中
         function showLoading() {
@@ -1724,17 +1885,56 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // === 主控台功能 ===
-        function refreshDashboard() {
-            callAPI('getDashboard')
-                .then(data => {
-                    updateDashboard(data);
-                    document.getElementById('lastUpdate').textContent = 
-                        `最後更新: ${new Date().toLocaleString('zh-TW')}`;
-                })
-                .catch(error => {
-                    console.error('Dashboard error:', error);
-                });
+// ✅ 修改後：重新整理時同步更新快取
+function refreshDashboard() {
+    showLoading('正在重新整理資料...');
+    
+    callAPI('getDashboard')
+        .then(data => {
+            hideLoading();
+            systemData.dashboard = data;  // ✅ 更新快取
+            systemData.lastUpdate = new Date();  // ✅ 更新時間
+            
+            updateDashboard(data);
+            
+            const lastUpdateEl = document.getElementById('lastUpdate');
+            if (lastUpdateEl) {
+                lastUpdateEl.textContent = `最後更新: ${systemData.lastUpdate.toLocaleString('zh-TW')}`;
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Dashboard error:', error);
+            alert('重新整理失敗：' + error.message);
+        });
+}
+        // ✅ 新增：重新整理所有資料
+function refreshAllData() {
+    if (!checkPermission('s2')) {
+        alert('權限不足');
+        return;
+    }
+    
+    if (!confirm('確定要重新整理所有資料嗎？\n這可能需要 3-5 秒的時間。')) {
+        return;
+    }
+    
+    preloadAllData().then(success => {
+        if (success) {
+            alert('✅ 所有資料已重新整理完成！');
+            
+            // 如果當前在主控台，更新顯示
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab && activeTab.id === 'dashboard') {
+                updateDashboard(systemData.dashboard);
+            }
+        } else {
+            alert('❌ 部分資料重新整理失敗，請稍後再試');
         }
+    });
+}
+
+
         
         function updateDashboard(data) {
             const container = document.getElementById('dashboardKPIs');
@@ -1785,21 +1985,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // === 庫存管理功能 ===
-        function refreshInventory() {
-            if (!checkPermission('s2')) {
-                alert('權限不足');
-                return;
-            }
+// ✅ 修改後：重新整理時同步更新快取
+function refreshInventory() {
+    if (!checkPermission('s2')) {
+        alert('權限不足');
+        return;
+    }
+    
+    showLoading('正在重新整理庫存資料...');
+    
+    callAPI('getInventory')
+        .then(data => {
+            hideLoading();
+            systemData.inventory = data.items || [];  // ✅ 更新快取
+            systemData.lastUpdate = new Date();  // ✅ 更新時間
             
-            callAPI('getInventory')
-                .then(data => {
-                    systemData.inventory = data.items || [];
-                    displayInventory();
-                })
-                .catch(error => {
-                    console.error('Inventory error:', error);
-                });
-        }
+            displayInventory();
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Inventory error:', error);
+            alert('重新整理失敗：' + error.message);
+        });
+}
+
         
 function displayInventory() {
     const tbody = document.getElementById('inventoryTableBody');
