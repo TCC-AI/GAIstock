@@ -1131,7 +1131,8 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="btn btn-primary" onclick="generateReplenishment()">🔄 重新載入補單建議</button>
             <button class="btn btn-success" onclick="approveAllSuggestions()">✅ 全部核准</button>
-            <button class="btn btn-warning" onclick="exportReplenishment()">📥 匯出補單</button>
+            <button class="btn btn-warning" onclick="sendReplenishmentEmail()">📧 補單寄發</button>
+            <button class="btn btn-info" onclick="sendReplenishmentEmail(true)">🧪 測試寄發</button>
             <button class="btn btn-danger" onclick="clearPending()">🗑️ 清除待處理</button>
         </div>
         
@@ -1270,7 +1271,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
                             </div>
                             <div class="form-group">
                                 <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbzLTvCGry_tI7yUm9Pzd1DrP5myo4XE9MuMs-RRh0iKCty-yzgxpEz28wWtoHxGddEs/exec">
+                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbzfcwZP1WioDcXdWMJI0i60Bi21nQ4lJPbAfsu5bjqhkapP_T-WoYe24R2vP2-2x55x/exec">
                             </div>
                             <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
                             <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
@@ -1320,7 +1321,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     
     <script>
         // 系統配置
-        let GAS_URL = 'https://script.google.com/macros/s/AKfycbzLTvCGry_tI7yUm9Pzd1DrP5myo4XE9MuMs-RRh0iKCty-yzgxpEz28wWtoHxGddEs/exec';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbzfcwZP1WioDcXdWMJI0i60Bi21nQ4lJPbAfsu5bjqhkapP_T-WoYe24R2vP2-2x55x/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
         // 用戶會話管理
@@ -2928,6 +2929,94 @@ function saveConnection() {
                     alert('匯出失敗: ' + error.message);
                 });
         }
+
+        
+
+// 新增：補單寄發函數
+function sendReplenishmentEmail(isTest = false) {
+    if (!checkPermission('s3')) {
+        alert('權限不足：需要 S3 或以上權限');
+        return;
+    }
+    
+    const confirmMsg = isTest 
+        ? '確定要寄送測試補單到 phycck@gmail.com 嗎？' 
+        : '確定要寄送補單給所有廠商嗎？';
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    // 顯示載入中
+    const loadingMsg = isTest ? '正在寄送測試補單...' : '正在寄送補單給廠商...';
+    showLoading(loadingMsg);
+    
+    callAPI('sendReplenishmentEmail', { isTest: isTest })
+        .then(result => {
+            hideLoading();
+            
+            if (result.status === 'success') {
+                let message = `✅ 補單寄發完成！\n\n`;
+                message += `📧 成功寄送：${result.successCount} 個廠商\n`;
+                
+                if (result.skippedCount > 0) {
+                    message += `⚠️ 跳過（無 Email）：${result.skippedCount} 個廠商\n`;
+                    message += `\n跳過的廠商：\n${result.skippedSuppliers.join('\n')}`;
+                }
+                
+                if (isTest) {
+                    message += `\n\n🧪 測試信已寄送到：phycck@gmail.com`;
+                }
+                
+                alert(message);
+                
+                // 重新載入補單建議
+                loadReplenishments();
+            } else {
+                alert('❌ 寄送失敗：' + result.message);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            alert('❌ 寄送失敗：' + error.message);
+        });
+}
+
+// 輔助函數：顯示載入中
+function showLoading(message) {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'emailLoadingOverlay';
+    loadingDiv.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    `;
+    loadingDiv.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p style="margin-top: 15px; font-size: 16px;">${message}</p>
+        </div>
+    `;
+    document.body.appendChild(loadingDiv);
+}
+
+// 輔助函數：隱藏載入中
+function hideLoading() {
+    const loadingDiv = document.getElementById('emailLoadingOverlay');
+    if (loadingDiv) {
+        loadingDiv.remove();
+    }
+}
+
         
         function editCell(cell, sku, field) {
             if (!checkPermission('s2')) {
