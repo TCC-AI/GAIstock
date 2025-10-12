@@ -1858,17 +1858,29 @@ function handleLogin(event) {
     
     callAPI('login', { account, password })
         .then(result => {
+            console.log('🔐 登入回應:', result); // ✅ Debug 1
+            
             if (result.success) {
+                // ✅ 確保取得正確的 level
+                const level = result.user.level || 's1';
+                
                 currentUser = {
                     account: account,
                     name: result.user.name || account,
                     title: result.user.title || '',
-                    level: result.user.level || 's1'
+                    level: level
                 };
-                userLevel = result.user.level || 's1';
+                userLevel = level;
                 
+                console.log('👤 currentUser:', currentUser); // ✅ Debug 2
+                console.log('🔑 userLevel:', userLevel); // ✅ Debug 3
+                
+                // ✅ 儲存到 sessionStorage
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
                 sessionStorage.setItem('userLevel', userLevel);
+                
+                // ✅ 驗證是否儲存成功
+                console.log('💾 sessionStorage.userLevel:', sessionStorage.getItem('userLevel')); // ✅ Debug 4
                 
                 showMainSystem();
                 
@@ -1896,6 +1908,7 @@ function handleLogin(event) {
             alert('登入過程發生錯誤，請稍後再試！');
         });
 }
+
 
         // ✅ 新增：預載入所有資料
 async function preloadAllData() {
