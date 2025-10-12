@@ -1004,6 +1004,47 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     color: #999;
     margin-left: 4px;
 }
+/* ✅ 新增：權限徽章樣式 */
+.permission-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 25px;
+    color: white;
+    font-size: 14px;
+    margin: 15px 0;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    animation: fadeInBadge 0.5s ease-out;
+}
+
+.badge-icon {
+    font-size: 18px;
+}
+
+.badge-role {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.badge-desc {
+    opacity: 0.95;
+    font-size: 13px;
+    padding-left: 8px;
+    border-left: 1px solid rgba(255,255,255,0.3);
+}
+
+@keyframes fadeInBadge {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
     </style>
 </head>
@@ -1646,7 +1687,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
                             </div>
                             <div class="form-group">
                                 <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbxYWrzuXYdRKZr2g_HWqXO8crqpIk9d42NT0J0FfmL4__uqnJufKb5rw59k9h5OUyxD/exec">
+                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbw-hsI4kzRd-H5eo6ZuC6P6AjrSdTEHeiVdvA4lS2EVm4JiPRXVK_YjewNusOLY3Tzv/exec">
                             </div>
                             <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
                             <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
@@ -1696,7 +1737,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     
     <script>
         // 系統配置
-        let GAS_URL = 'https://script.google.com/macros/s/AKfycbxYWrzuXYdRKZr2g_HWqXO8crqpIk9d42NT0J0FfmL4__uqnJufKb5rw59k9h5OUyxD/exec';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbw-hsI4kzRd-H5eo6ZuC6P6AjrSdTEHeiVdvA4lS2EVm4JiPRXVK_YjewNusOLY3Tzv/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
         // 用戶會話管理
@@ -1706,11 +1747,12 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         
         // 權限配置
         const PERMISSIONS = {
-            's1': ['dashboard'], // 只能看主控台，無法使用按鈕
-            's2': ['dashboard', 'inventory'], // 可使用主控台和即時庫存
-            's3': ['dashboard', 'inventory', 'demand', 'prediction', 'replenishment', 'capacity'], // 除系統設定外都可用
-            's4': ['dashboard', 'inventory', 'demand', 'prediction', 'replenishment', 'capacity', 'settings'] // 無限制
+            's1': ['dashboard', 'prediction'], // ✅ 新增 prediction
+            's2': ['dashboard', 'inventory', 'prediction'], // ✅ 新增 prediction
+            's3': ['dashboard', 'inventory', 'demand', 'prediction', 'replenishment', 'capacity'],
+            's4': ['dashboard', 'inventory', 'demand', 'prediction', 'replenishment', 'capacity', 'settings']
         };
+
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('系統啟動...');
@@ -2037,19 +2079,53 @@ async function preloadAllData() {
         }
 
         // 禁用所有按鈕（s1 專用）
-        function disableAllButtons() {
-            const allButtons = document.querySelectorAll('.btn');
-            allButtons.forEach(button => {
-                // 除了登出按鈕外都禁用
-                if (!button.classList.contains('logout-btn')) {
-                    button.classList.add('disabled');
-                    button.onclick = function(e) {
-                        e.preventDefault();
-                        alert('您目前的權限僅能查看，無法執行操作');
-                    };
-                }
-            });
+// 禁用所有按鈕（s1 專用）
+function disableAllButtons() {
+    // ✅ 修正：改用 .tab-content.active 來判斷當前頁面
+    const currentSection = document.querySelector('.tab-content.active');
+    const isPredictionPage = currentSection && currentSection.id === 'prediction';
+    
+    const allButtons = document.querySelectorAll('.btn');
+    allButtons.forEach(button => {
+        // 除了登出按鈕外都禁用
+        if (!button.classList.contains('logout-btn')) {
+            // ✅ s1 在 GAI智慧預測分析頁面可以點擊 Accordion 按鈕
+            if (isPredictionPage && button.classList.contains('accordion-btn')) {
+                // 保持 Accordion 按鈕可用
+                return;
+            }
+            
+            button.classList.add('disabled');
+            button.onclick = function(e) {
+                e.preventDefault();
+                showPermissionAlert();
+            };
         }
+    });
+}
+
+// ✅ 新增：顯示權限提示
+function showPermissionAlert() {
+    const userLevel = sessionStorage.getItem('userLevel');
+    let message = '';
+    
+    switch(userLevel) {
+        case 's1':
+            message = '👁️ 訪客權限：您目前僅能查看資訊，無法執行操作';
+            break;
+        case 's2':
+            message = '⚠️ 操作員權限：此功能需要主管以上權限';
+            break;
+        case 's3':
+            message = '⚠️ 主管權限：此功能需要管理員權限';
+            break;
+        default:
+            message = '您目前的權限僅能查看，無法執行操作';
+    }
+    
+    alert(message);
+}
+
 
         // 登出功能
         function logout() {
@@ -2170,22 +2246,29 @@ function loadTabData(tabName) {
             break;
             
 case 'prediction':
-    if (checkPermission('s3')) {
-        // ✅ 新增：載入商品評析
+    // ✅ 修正：s1 和 s2 也可以進入此頁面
+    if (checkPermission('s1')) {
+        // 載入商品評析（所有用戶都可以看）
         if (systemData.productAnalysis && systemData.productAnalysis.length > 0) {
             displayProductAnalysis();
         } else {
             loadProductAnalysis();
         }
         
-        // 原有的預測資料載入
-        if (systemData.predictions.length > 0) {
-            displayPredictions();
-        } else {
-            loadPredictions();
+        // 原有的預測資料載入（s3 以上才能看）
+        if (checkPermission('s3')) {
+            if (systemData.predictions.length > 0) {
+                displayPredictions();
+            } else {
+                loadPredictions();
+            }
         }
+        
+        // ✅ 根據權限顯示提示
+        applyPredictionPagePermissions();
     }
     break;
+
 
             
         case 'replenishment':
@@ -2207,6 +2290,70 @@ case 'prediction':
                 }
             }
             break;
+    }
+}
+// ✅ 新增：應用 GAI智慧預測分析頁面的權限控制
+function applyPredictionPagePermissions() {
+    const userLevel = sessionStorage.getItem('userLevel');
+    
+    // 找到重新整理按鈕
+    const refreshBtn = document.querySelector('#prediction .btn-primary[onclick="refreshProductAnalysis()"]');
+    
+    if (userLevel === 's1') {
+        // s1: 只能查看，可以點 Accordion，不能點重新整理
+        if (refreshBtn) {
+            refreshBtn.classList.add('disabled');
+            refreshBtn.onclick = function(e) {
+                e.preventDefault();
+                showPermissionAlert();
+            };
+        }
+        
+        // 顯示權限徽章
+        showPermissionBadge('訪客', '可查看詳細內容，無法執行操作');
+        
+    } else if (userLevel === 's2') {
+        // s2: 可以查看和重新整理，不能執行預測
+        const predictBtn = document.querySelector('#prediction .btn-primary[onclick="runPrediction()"]');
+        if (predictBtn) {
+            predictBtn.classList.add('disabled');
+            predictBtn.onclick = function(e) {
+                e.preventDefault();
+                showPermissionAlert();
+            };
+        }
+        
+        showPermissionBadge('操作員', '可查看和重新整理，無法執行預測');
+        
+    } else if (userLevel === 's3') {
+        showPermissionBadge('主管', '完整權限');
+        
+    } else if (userLevel === 's4') {
+        showPermissionBadge('管理員', '完整權限');
+    }
+}
+// ✅ 新增：顯示權限徽章
+function showPermissionBadge(roleName, description) {
+    const predictionSection = document.getElementById('prediction');
+    if (!predictionSection) return;
+    
+    // 移除舊的徽章
+    const oldBadge = predictionSection.querySelector('.permission-badge');
+    if (oldBadge) oldBadge.remove();
+    
+    // 創建新徽章
+    const badge = document.createElement('div');
+    badge.className = 'permission-badge';
+    badge.innerHTML = `
+        <span class="badge-icon">🔐</span>
+        <span class="badge-role">${roleName}</span>
+        <span class="badge-desc">${description}</span>
+    `;
+    
+    // 插入到 GAI 標題區塊
+    const gaiHeader = predictionSection.querySelector('h2');
+    if (gaiHeader) {
+        gaiHeader.parentElement.insertBefore(badge, gaiHeader.nextSibling);
     }
 }
 
