@@ -1927,14 +1927,111 @@ function handleLogin(event) {
             alert('登入過程發生錯誤，請稍後再試！');
         });
 }
+// ========== ✅ 新增：資料載入輔助函數 ==========
+
+/**
+ * 載入庫存資料
+ */
+function fetchInventory() {
+    return callAPI('getInventory')
+        .then(data => {
+            console.log('✅ 庫存資料載入完成:', data.items?.length || 0, '筆');
+            return data.items || [];
+        })
+        .catch(error => {
+            console.error('❌ 庫存資料載入失敗:', error);
+            return [];
+        });
+}
+
+/**
+ * 載入需求設定
+ */
+function fetchDemands() {
+    return callAPI('getDemands')
+        .then(data => {
+            console.log('✅ 需求設定載入完成:', data.demands?.length || 0, '筆');
+            return data.demands || [];
+        })
+        .catch(error => {
+            console.error('❌ 需求設定載入失敗:', error);
+            return [];
+        });
+}
+
+/**
+ * 載入預測結果
+ */
+function fetchPredictions() {
+    return callAPI('getPredictions')
+        .then(data => {
+            console.log('✅ 預測結果載入完成:', data.predictions?.length || 0, '筆');
+            return data.predictions || [];
+        })
+        .catch(error => {
+            console.error('❌ 預測結果載入失敗:', error);
+            return [];
+        });
+}
+
+/**
+ * 載入補單建議
+ */
+function fetchReplenishments() {
+    return callAPI('getReplenishments')
+        .then(data => {
+            console.log('✅ 補單建議載入完成:', data.suggestions?.length || 0, '筆');
+            return data.suggestions || [];
+        })
+        .catch(error => {
+            console.error('❌ 補單建議載入失敗:', error);
+            return [];
+        });
+}
+
+/**
+ * 載入倉容資料
+ */
+function fetchCapacity() {
+    return callAPI('getCapacity')
+        .then(data => {
+            console.log('✅ 倉容資料載入完成');
+            return data;
+        })
+        .catch(error => {
+            console.error('❌ 倉容資料載入失敗:', error);
+            return { freezers: [], coolers: [] };
+        });
+}
+
+/**
+ * 載入商品評析
+ */
+function fetchProductAnalysis() {
+    return callAPI('getProductAnalysis')
+        .then(data => {
+            console.log('✅ 商品評析載入完成:', data.products?.length || 0, '筆');
+            return data.products || [];
+        })
+        .catch(error => {
+            console.error('❌ 商品評析載入失敗:', error);
+            return [];
+        });
+}
 
 
         // ✅ 新增：預載入所有資料
+/**
+ * 根據用戶權限預載資料
+ */
 async function preloadAllData() {
     showLoading('正在載入系統資料，請稍候...');
     
     try {
         console.log('🚀 開始預載入所有資料...');
+        
+        const userLevel = sessionStorage.getItem('userLevel');
+        console.log(`👤 當前用戶等級: ${userLevel}`);
         
         // 根據權限決定要載入哪些資料
         const promises = [];
@@ -1948,44 +2045,48 @@ async function preloadAllData() {
                 })
         );
         
-        // 2️⃣ s2 以上載入庫存
+        // 2️⃣ 所有用戶都載入商品評析（s1 也可以看）
+        promises.push(
+            fetchProductAnalysis()
+                .then(data => {
+                    systemData.productAnalysis = data;
+                    console.log(`✅ 商品評析載入完成 (${data.length} 筆)`);
+                })
+        );
+        
+        // 3️⃣ s2 以上載入庫存
         if (checkPermission('s2')) {
             promises.push(
-                callAPI('getInventory')
+                fetchInventory()
                     .then(data => {
-                        systemData.inventory = data.items || [];
-                        console.log(`✅ 庫存資料載入完成 (${systemData.inventory.length} 筆)`);
+                        systemData.inventory = data;
+                        console.log(`✅ 庫存資料載入完成 (${data.length} 筆)`);
                     })
             );
         }
         
-        // 3️⃣ s3 以上載入需求、預測、補單、倉容
+        // 4️⃣ s3 以上載入需求、預測、補單、倉容
         if (checkPermission('s3')) {
             promises.push(
-                callAPI('getDemands')
+                fetchDemands()
                     .then(data => {
-                        systemData.demands = data.demands || [];
-                        console.log(`✅ 需求設定載入完成 (${systemData.demands.length} 筆)`);
+                        systemData.demands = data;
+                        console.log(`✅ 需求設定載入完成 (${data.length} 筆)`);
                     }),
                 
-                callAPI('getPredictions')
+                fetchPredictions()
                     .then(data => {
-                        systemData.predictions = data.predictions || [];
-                        console.log(`✅ 預測結果載入完成 (${systemData.predictions.length} 筆)`);
+                        systemData.predictions = data;
+                        console.log(`✅ 預測結果載入完成 (${data.length} 筆)`);
                     }),
                 
-                callAPI('getReplenishments')
+                fetchReplenishments()
                     .then(data => {
-                        systemData.replenishments = data.suggestions || [];
-                        console.log(`✅ 補單建議載入完成 (${systemData.replenishments.length} 筆)`);
+                        systemData.replenishments = data;
+                        console.log(`✅ 補單建議載入完成 (${data.length} 筆)`);
                     }),
-                                callAPI('getProductAnalysis')
-                            .then(data => {
-                                systemData.productAnalysis = data.products || [];
-                                console.log(`✅ 商品評析載入完成 (${systemData.productAnalysis.length} 筆)`);
-                            }),
                 
-                callAPI('getCapacity')
+                fetchCapacity()
                     .then(data => {
                         systemData.capacity = data;
                         console.log('✅ 倉容資料載入完成');
@@ -2012,6 +2113,7 @@ async function preloadAllData() {
         return false;
     }
 }
+
 
 
         // 更新用戶資訊顯示
@@ -3251,7 +3353,7 @@ function clearCustomDate() {
 
 // 載入商品評析資料
 function loadProductAnalysis() {
-    if (!checkPermission('s3')) return;
+    if (!checkPermission('s1')) return;
     
     showLoading('正在載入商品評析資料...');
     
@@ -3352,7 +3454,7 @@ function renderMarkdown(text) {
 
 // 重新整理商品評析
 function refreshProductAnalysis() {
-    if (!checkPermission('s3')) {
+    if (!checkPermission('s2')) {
         alert('權限不足');
         return;
     }
