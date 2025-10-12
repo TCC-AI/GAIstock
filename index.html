@@ -1096,7 +1096,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
             <button class="nav-tab active" onclick="switchTab('dashboard')" data-permission="s1">📊 主控台</button>
             <button class="nav-tab" onclick="switchTab('inventory')" data-permission="s2">📦 即時庫存</button>
             <button class="nav-tab" onclick="switchTab('demand')" data-permission="s3">📈 需求設定</button>
-            <button class="nav-tab" onclick="switchTab('prediction')" data-permission="s3">🤖 GAI智慧預測分析</button>
+            <button class="nav-tab" onclick="switchTab('prediction')" data-permission="s1">🤖 GAI智慧預測分析</button>
             <button class="nav-tab" onclick="switchTab('replenishment')" data-permission="s3">📝 補單管理</button>
             <button class="nav-tab" onclick="switchTab('capacity')" data-permission="s3">🏢 倉容監控</button>
             <button class="nav-tab" onclick="switchTab('settings')" data-permission="s4">⚙️ 系統設定</button>
@@ -1687,7 +1687,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
                             </div>
                             <div class="form-group">
                                 <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbw-hsI4kzRd-H5eo6ZuC6P6AjrSdTEHeiVdvA4lS2EVm4JiPRXVK_YjewNusOLY3Tzv/exec">
+                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbzxDeEK8wqqf-RU9gj93f1AGICBaUWf4rftC0D6mFAi4gAstA9-WiUOILFgd2eRLeWF/exec">
                             </div>
                             <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
                             <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
@@ -1737,7 +1737,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     
     <script>
         // 系統配置
-        let GAS_URL = 'https://script.google.com/macros/s/AKfycbw-hsI4kzRd-H5eo6ZuC6P6AjrSdTEHeiVdvA4lS2EVm4JiPRXVK_YjewNusOLY3Tzv/exec';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbzxDeEK8wqqf-RU9gj93f1AGICBaUWf4rftC0D6mFAi4gAstA9-WiUOILFgd2eRLeWF/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
         // 用戶會話管理
@@ -2026,7 +2026,7 @@ async function preloadAllData() {
                 }
                 
                 const levelNames = {
-                    's1': '訪客',
+                    's1': '客戶',
                     's2': '操作員',
                     's3': '主管',
                     's4': '管理員'
@@ -2053,66 +2053,69 @@ function applyPermissions() {
     const allowedTabs = PERMISSIONS[userLevel] || [];
     console.log('✅ 允許的標籤:', allowedTabs);
     
-    // 處理導航標籤
+    // ========== 處理導航標籤 ==========
     const allTabs = document.querySelectorAll('.nav-tab');
     console.log('📌 找到', allTabs.length, '個導航標籤');
     
     allTabs.forEach(tab => {
         const tabFunction = tab.getAttribute('onclick');
-        if (tabFunction) {
-            const tabName = tabFunction.match(/switchTab\('(\w+)'\)/)?.[1];
+        if (!tabFunction) return;
+        
+        const tabName = tabFunction.match(/switchTab\('(\w+)'\)/)?.[1];
+        if (!tabName) return;
+        
+        console.log(`🔍 檢查標籤: ${tabName}`);
+        
+        // ✅ 修正：檢查是否在允許清單中
+        if (allowedTabs.includes(tabName)) {
+            // ✅ 有權限：啟用按鈕
+            console.log(`  ✅ ${tabName} 在允許清單中，啟用`);
+            tab.classList.remove('disabled');
             
-            console.log(`🔍 檢查標籤: ${tabName}`);
+            // ✅ 恢復原始的 onclick 功能
+            tab.onclick = null;
+            tab.setAttribute('onclick', `switchTab('${tabName}')`);
             
-            // ✅ 修正：檢查該標籤是否在允許清單中
-            if (tabName && !allowedTabs.includes(tabName)) {
-                console.log(`  ❌ ${tabName} 不在允許清單中，禁用`);
-                tab.classList.add('disabled');
-                tab.onclick = function(e) {
-                    e.preventDefault();
-                    alert('權限不足，無法訪問此功能');
-                };
-            } else {
-                console.log(`  ✅ ${tabName} 在允許清單中，啟用`);
-                // ✅ 新增：如果在允許清單中，確保移除 disabled 類別
-                tab.classList.remove('disabled');
-            }
+        } else {
+            // ❌ 無權限：禁用按鈕
+            console.log(`  ❌ ${tabName} 不在允許清單中，禁用`);
+            tab.classList.add('disabled');
+            
+            // ✅ 覆蓋 onclick，防止點擊
+            tab.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('權限不足，無法訪問此功能');
+                return false;
+            };
         }
     });
     
-    // 處理各頁面的權限控制
-    allowedTabs.forEach(tabName => {
+    // ========== 處理各頁面的權限控制 ==========
+    const allTabNames = ['dashboard', 'inventory', 'demand', 'prediction', 'replenishment', 'capacity', 'settings'];
+    
+    allTabNames.forEach(tabName => {
         const contentDiv = document.getElementById(tabName + 'Content');
         const permissionDiv = document.getElementById(tabName + 'PermissionMessage');
         
-        if (contentDiv && permissionDiv) {
-            contentDiv.style.display = 'block';
-            permissionDiv.style.display = 'none';
+        if (allowedTabs.includes(tabName)) {
+            // 有權限：顯示內容，隱藏權限訊息
+            if (contentDiv) contentDiv.style.display = 'block';
+            if (permissionDiv) permissionDiv.style.display = 'none';
+        } else {
+            // 無權限：隱藏內容，顯示權限訊息
+            if (contentDiv) contentDiv.style.display = 'none';
+            if (permissionDiv) permissionDiv.style.display = 'block';
         }
     });
     
-    // 隱藏無權限的頁面內容
-    Object.keys(PERMISSIONS).forEach(level => {
-        PERMISSIONS[level].forEach(tabName => {
-            if (!allowedTabs.includes(tabName)) {
-                const contentDiv = document.getElementById(tabName + 'Content');
-                const permissionDiv = document.getElementById(tabName + 'PermissionMessage');
-                
-                if (contentDiv && permissionDiv) {
-                    contentDiv.style.display = 'none';
-                    permissionDiv.style.display = 'block';
-                }
-            }
-        });
-    });
-    
-    // s1 用戶特殊處理：禁用所有按鈕
+    // ========== s1 用戶特殊處理：禁用所有操作按鈕 ==========
     if (userLevel === 's1') {
         console.log('🔒 s1 用戶，禁用所有操作按鈕');
         disableAllButtons();
     }
     
-    // 處理按鈕權限
+    // ========== 處理按鈕權限 ==========
     const buttonsWithPermission = document.querySelectorAll('[data-permission]');
     buttonsWithPermission.forEach(button => {
         const requiredLevel = button.getAttribute('data-permission');
@@ -2131,6 +2134,7 @@ function applyPermissions() {
     
     console.log('✅ applyPermissions 執行完成');
 }
+
 
 
         
