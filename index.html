@@ -2008,26 +2008,31 @@ async function preloadAllData() {
         }
 
         // 應用權限設定
-        function applyPermissions() {
-            if (!userLevel) return;
+function applyPermissions() {
+    if (!userLevel) return;
+    
+    const allowedTabs = PERMISSIONS[userLevel] || [];
+    
+    // 處理導航標籤
+    const allTabs = document.querySelectorAll('.nav-tab');
+    allTabs.forEach(tab => {
+        const tabFunction = tab.getAttribute('onclick');
+        if (tabFunction) {
+            const tabName = tabFunction.match(/switchTab\('(\w+)'\)/)?.[1];
             
-            const allowedTabs = PERMISSIONS[userLevel] || [];
-            
-            // 處理導航標籤
-            const allTabs = document.querySelectorAll('.nav-tab');
-            allTabs.forEach(tab => {
-                const tabFunction = tab.getAttribute('onclick');
-                if (tabFunction) {
-                    const tabName = tabFunction.match(/switchTab\('(\w+)'\)/)?.[1];
-                    if (tabName && !allowedTabs.includes(tabName)) {
-                        tab.classList.add('disabled');
-                        tab.onclick = function(e) {
-                            e.preventDefault();
-                            alert('權限不足，無法訪問此功能');
-                        };
-                    }
-                }
-            });
+            // ✅ 修正：檢查該標籤是否在允許清單中
+            if (tabName && !allowedTabs.includes(tabName)) {
+                tab.classList.add('disabled');
+                tab.onclick = function(e) {
+                    e.preventDefault();
+                    alert('權限不足，無法訪問此功能');
+                };
+            } else {
+                // ✅ 新增：如果在允許清單中，確保移除 disabled 類別
+                tab.classList.remove('disabled');
+            }
+        }
+    });
             
             // 處理各頁面的權限控制
             allowedTabs.forEach(tabName => {
