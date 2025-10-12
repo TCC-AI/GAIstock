@@ -1061,8 +1061,9 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         transform: translateY(0);
     }
 }
-/* ========== ✅ Logo 波紋動畫效果 ========== */
+/* ========== ✅ Logo 波紋動畫效果（修正版） ========== */
 
+/* Logo 外層容器 */
 .header-logo-wrapper {
     position: absolute;
     left: 25px;
@@ -1070,8 +1071,12 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     transform: translateY(-50%);
     width: 80px;
     height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Logo 圖片 */
 .header-logo {
     width: 80px;
     height: 80px;
@@ -1085,13 +1090,12 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
 .header-logo-wrapper::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
     width: 80px;
     height: 80px;
     border-radius: 10px;
-    border: 5px solid rgba(3, 103, 161, 0.6);
+    border: 3px solid rgba(167, 250, 203, 0.7);
     animation: logoRipple 2.5s infinite ease-out;
     pointer-events: none;
 }
@@ -1100,9 +1104,8 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
 .header-logo-wrapper::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
     width: 80px;
     height: 80px;
     border-radius: 10px;
@@ -1111,20 +1114,26 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     pointer-events: none;
 }
 
+/* 波紋動畫 */
 @keyframes logoRipple {
     0% {
         width: 80px;
         height: 80px;
         opacity: 1;
+        top: 0;
+        left: 0;
     }
     100% {
         width: 130px;
         height: 130px;
         opacity: 0;
+        top: -25px;
+        left: -25px;
     }
 }
 
 /* ========== Logo 波紋動畫結束 ========== */
+
 
     </style>
 </head>
