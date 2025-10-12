@@ -1,4 +1,6 @@
 
+
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -8,85 +10,6 @@
      <!-- ✅ 新增 Chart.js CDN（複製這一整行）-->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        /* ========== ✅ 新增：商品評析樣式 ========== */
-#productAnalysisTable {
-    font-size: 0.9em;
-}
-
-#productAnalysisTable th {
-    position: sticky;
-    top: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    z-index: 10;
-    padding: 12px 8px;
-}
-
-#productAnalysisTable td {
-    padding: 12px 8px;
-    vertical-align: top;
-}
-
-/* Accordion 按鈕樣式 */
-.accordion-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    width: 100%;
-    justify-content: center;
-}
-
-.accordion-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-.accordion-btn.active {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-}
-
-/* Accordion 內容區 */
-.accordion-content {
-    display: none;
-    margin-top: 10px;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    border-left: 4px solid #667eea;
-    animation: slideDown 0.3s ease-out;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.accordion-content.active {
-    display: block;
-}
-
-.accordion-content p {
-    margin: 0;
-    line-height: 1.8;
-    color: #333;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        max-height: 0;
-    }
-    to {
-        opacity: 1;
-        max-height: 300px;
-    }
-}
-
 /* ✅ 修改後：支援上排 4 個 + 下排 2 個 */
 .dashboard-grid {
     display: grid;
@@ -1364,67 +1287,15 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
                 </div>
             </div>
             
-<!-- AI預測分析 -->
-<div id="prediction" class="tab-content">
-    <div class="permission-message" id="predictionPermissionMessage" style="display: none;">
-        <h3>🔒 權限不足</h3>
-        <p>您目前的權限等級無法訪問此功能</p>
-        <p>如需使用此功能，請聯繫系統管理員提升權限</p>
-    </div>
-    
-    <div id="predictionContent">
-        <!-- ========== ✅ 新增：GAI商品評析區塊 ========== -->
-        <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
-            <h2 style="text-align: center; color: #667eea; margin-bottom: 10px;">
-                🤖 GAI商品評析
-            </h2>
-            <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 1.1em;">
-                GAI針對不同商品銷售軌跡，提供智慧補貨建議
-            </p>
-            
-            <!-- Elon 數位主任圖片 -->
-            <div style="text-align: center; margin-bottom: 30px;">
-                <img src="S1.png" alt="GAI商品庫存計算數位主任 Elon" 
-                     style="width: 250px; height: 250px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                <div style="margin-top: 15px; font-size: 1.2em; font-weight: bold; color: #667eea;">
-                    GAI商品庫存計算數位主任<br>Elon
-                </div>
-            </div>
-            
-            <!-- 資料呈現框架 -->
-            <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #333;">📊 商品分析清單</h3>
-                    <button class="btn btn-primary" onclick="refreshProductAnalysis()">
-                        🔄 重新整理
-                    </button>
+            <!-- AI預測分析 -->
+            <div id="prediction" class="tab-content">
+                <div class="permission-message" id="predictionPermissionMessage" style="display: none;">
+                    <h3>🔒 權限不足</h3>
+                    <p>您目前的權限等級無法訪問此功能</p>
+                    <p>如需使用此功能，請聯繫系統管理員提升權限</p>
                 </div>
                 
-                <!-- 表格容器 -->
-                <div class="table-container" style="max-height: 600px; overflow-y: auto;">
-                    <table id="productAnalysisTable" style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th style="width: 120px;">品項編號</th>
-                                <th style="width: 200px;">品名</th>
-                                <th style="width: 150px;">廠商</th>
-                                <th style="width: 150px;">銷售軌跡</th>
-                                <th style="width: 150px;">補單策略</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productAnalysisTableBody">
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af;">
-                                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                                    <div style="font-size: 16px;">載入中...</div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <!-- ========== GAI商品評析區塊結束 ========== -->
+                <div id="predictionContent">
                     <h2>AI預測分析引擎</h2>
                     
                     <div class="dashboard-grid">
@@ -1760,118 +1631,6 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoginForm();
     }
 });
-// ========== ✅ 新增：商品評析功能 ==========
-
-// 載入商品評析資料
-function loadProductAnalysis() {
-    if (!checkPermission('s3')) return;
-    
-    showLoading('正在載入商品評析資料...');
-    
-    callAPI('getProductAnalysis')
-        .then(data => {
-            hideLoading();
-            systemData.productAnalysis = data.products || [];
-            displayProductAnalysis();
-        })
-        .catch(error => {
-            hideLoading();
-            console.error('Product analysis error:', error);
-            alert('載入商品評析失敗：' + error.message);
-        });
-}
-
-// 顯示商品評析資料
-function displayProductAnalysis() {
-    const tbody = document.getElementById('productAnalysisTableBody');
-    
-    if (systemData.productAnalysis.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
-                    <div style="font-size: 16px; font-weight: bold;">沒有商品評析資料</div>
-                    <div style="font-size: 14px; margin-top: 8px; color: #6b7280;">請確認【商品清冊】工作表是否有資料</div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = systemData.productAnalysis.map((product, index) => `
-        <tr>
-            <td>${product.sku || ''}</td>
-            <td>${product.name || ''}</td>
-            <td>${product.supplier || ''}</td>
-            <td>
-                <button class="accordion-btn" onclick="toggleAccordion('trend-${index}')">
-                    <span id="trend-icon-${index}">▼</span>
-                    查看軌跡
-                </button>
-                <div id="trend-${index}" class="accordion-content">
-                    ${renderMarkdown(product.salesTrend || '無資料')}
-                </div>
-            </td>
-            <td>
-                <button class="accordion-btn" onclick="toggleAccordion('strategy-${index}')">
-                    <span id="strategy-icon-${index}">▼</span>
-                    查看策略
-                </button>
-                <div id="strategy-${index}" class="accordion-content">
-                    ${renderMarkdown(product.replenishmentStrategy || '無資料')}
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Accordion 展開/收合
-function toggleAccordion(id) {
-    const content = document.getElementById(id);
-    const iconId = id.replace('trend-', 'trend-icon-').replace('strategy-', 'strategy-icon-');
-    const icon = document.getElementById(iconId);
-    const btn = icon.parentElement;
-    
-    if (content.classList.contains('active')) {
-        content.classList.remove('active');
-        icon.textContent = '▼';
-        btn.classList.remove('active');
-    } else {
-        content.classList.add('active');
-        icon.textContent = '▲';
-        btn.classList.add('active');
-    }
-}
-
-// 簡易 Markdown 渲染（支援基本格式）
-function renderMarkdown(text) {
-    if (!text) return '<p>無資料</p>';
-    
-    // 轉換換行符號
-    let html = text.replace(/\n/g, '<br>');
-    
-    // 轉換粗體 **text**
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    
-    // 轉換斜體 *text*
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    
-    // 轉換項目符號
-    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-    
-    return `<p>${html}</p>`;
-}
-
-// 重新整理商品評析
-function refreshProductAnalysis() {
-    if (!checkPermission('s3')) {
-        alert('權限不足');
-        return;
-    }
-    
-    loadProductAnalysis();
-}
 
 
 
@@ -2015,12 +1774,6 @@ async function preloadAllData() {
                         systemData.replenishments = data.suggestions || [];
                         console.log(`✅ 補單建議載入完成 (${systemData.replenishments.length} 筆)`);
                     }),
-                         // ✅ 新增：商品評析
-                callAPI('getProductAnalysis')
-                    .then(data => {
-                        systemData.productAnalysis = data.products || [];
-                        console.log(`✅ 商品評析載入完成 (${systemData.productAnalysis.length} 筆)`);
-                    );
                 
                 callAPI('getCapacity')
                     .then(data => {
@@ -2183,20 +1936,18 @@ async function preloadAllData() {
 
                    // ✅ 修改後：新增完整的資料快取結構
             let systemData = {
-    inventory: [],
-    demands: [],
-    predictions: [],
-    replenishments: [],
-    capacity: {
-        freezers: [],
-        coolers: []
-    },
-    dashboard: null,
-    productAnalysis: [],  // ✅ 新增
-    lastUpdate: null,
-    isLoaded: false
-};
-
+                inventory: [],
+                demands: [],
+                predictions: [],
+                replenishments: [],
+                capacity: {
+                    freezers: [],
+                    coolers: []
+                },
+                dashboard: null,
+                lastUpdate: null,  // ✅ 新增：記錄最後更新時間
+                isLoaded: false    // ✅ 新增：標記資料是否已載入
+            };
 
         
         // 檢查連接狀態
@@ -2280,24 +2031,15 @@ function loadTabData(tabName) {
             }
             break;
             
-case 'prediction':
-    if (checkPermission('s3')) {
-        // ✅ 新增：載入商品評析
-        if (systemData.productAnalysis && systemData.productAnalysis.length > 0) {
-            displayProductAnalysis();
-        } else {
-            loadProductAnalysis();
-        }
-        
-        // 原有的預測資料載入
-        if (systemData.predictions.length > 0) {
-            displayPredictions();
-        } else {
-            loadPredictions();
-        }
-    }
-    break;
-
+        case 'prediction':
+            if (checkPermission('s3')) {
+                if (systemData.predictions.length > 0) {
+                    displayPredictions();
+                } else {
+                    loadPredictions();
+                }
+            }
+            break;
             
         case 'replenishment':
             if (checkPermission('s3')) {
