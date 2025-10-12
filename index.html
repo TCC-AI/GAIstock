@@ -1061,6 +1061,70 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         transform: translateY(0);
     }
 }
+/* ========== ✅ Logo 波紋動畫效果 ========== */
+
+.header-logo-wrapper {
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 80px;
+    height: 80px;
+}
+
+.header-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 2;
+}
+
+/* 第一層波紋 */
+.header-logo-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    border: 3px solid rgba(167, 250, 203, 0.7);
+    animation: logoRipple 2.5s infinite ease-out;
+    pointer-events: none;
+}
+
+/* 第二層波紋 */
+.header-logo-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    border: 3px solid rgba(167, 250, 203, 0.4);
+    animation: logoRipple 2.5s infinite ease-out 0.8s;
+    pointer-events: none;
+}
+
+@keyframes logoRipple {
+    0% {
+        width: 80px;
+        height: 80px;
+        opacity: 1;
+    }
+    100% {
+        width: 130px;
+        height: 130px;
+        opacity: 0;
+    }
+}
+
+/* ========== Logo 波紋動畫結束 ========== */
 
     </style>
 </head>
@@ -1100,7 +1164,9 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     
     <div class="container" id="mainSystem">
         <div class="header">
-             <img src="R1.png" alt="Company Logo" class="header-logo">
+             <div class="header-logo-wrapper">
+        <img src="R1.png" alt="Company Logo" class="header-logo">
+    </div>
             <h1> GAI【客戶託收託運商品庫存】管理系統</h1>
             <p>智慧化冷鏈倉儲管理平台 |3座冷凍庫 · 7座冷藏庫</p>
             <div class="status-indicator" id="connectionStatus">
