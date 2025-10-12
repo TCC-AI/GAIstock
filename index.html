@@ -1066,7 +1066,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
 /* Logo 外層容器 */
 .header-logo-wrapper {
     position: absolute;
-    left: 25px;
+    left: 30px;
     top: 50%;
     transform: translateY(-50%);
     width: 80px;
@@ -1095,24 +1095,12 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     width: 80px;
     height: 80px;
     border-radius: 10px;
-    border: 5px solid rgba(167, 250, 203, 0.7);
+    border: 5px solid rgba(3, 103, 161, 0.6);
     animation: logoRipple 2.5s infinite ease-out;
     pointer-events: none;
 }
 
-/* 第二層波紋 */
-.header-logo-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 80px;
-    height: 80px;
-    border-radius: 10px;
-    border: 5px solid rgba(167, 250, 203, 0.4);
-    animation: logoRipple 2.5s infinite ease-out 0.8s;
-    pointer-events: none;
-}
+
 
 /* 波紋動畫 */
 @keyframes logoRipple {
