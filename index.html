@@ -1755,7 +1755,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
 
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('系統啟動...');
+    console.log('🚀 系統啟動...');
     
     // 設定系統設定頁面的 URL 顯示（僅供管理員查看）
     const webAppUrlElement = document.getElementById('webAppUrl');
@@ -1767,9 +1767,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const savedUser = sessionStorage.getItem('currentUser');
     const savedLevel = sessionStorage.getItem('userLevel');
     
+    console.log('💾 檢查 sessionStorage:', {
+        savedUser: savedUser ? 'exists' : 'null',
+        savedLevel: savedLevel
+    });
+    
     if (savedUser && savedLevel) {
+        console.log('✅ 發現已登入的 session，恢復用戶狀態');
         currentUser = JSON.parse(savedUser);
         userLevel = savedLevel;
+        
+        console.log('👤 恢復的用戶:', currentUser);
+        console.log('🔑 恢復的權限:', userLevel);
+        
         showMainSystem();
         checkConnection();
         
@@ -1822,24 +1832,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // 顯示主系統
-        function showMainSystem() {
-            const loginContainer = document.getElementById('loginContainer');
-            const mainSystem = document.getElementById('mainSystem');
-            
-            if (loginContainer) {
-                loginContainer.style.display = 'none';
-            }
-            
-            if (mainSystem) {
-                mainSystem.style.display = 'flex';
-            }
-            
-            // 更新用戶資訊顯示
-            updateUserInfo();
-            
-            // 根據權限設定介面
-            applyPermissions();
-        }
+// 顯示主系統
+function showMainSystem() {
+    const loginContainer = document.getElementById('loginContainer');
+    const mainSystem = document.getElementById('mainSystem');
+    
+    if (loginContainer) {
+        loginContainer.style.display = 'none';
+    }
+    
+    if (mainSystem) {
+        mainSystem.style.display = 'flex';
+    }
+    
+    // ✅ 確保 userLevel 已經設定
+    if (!userLevel) {
+        userLevel = sessionStorage.getItem('userLevel');
+        console.log('🔄 從 sessionStorage 恢復 userLevel:', userLevel);
+    }
+    
+    // 更新用戶資訊顯示
+    updateUserInfo();
+    
+    // 根據權限設定介面
+    console.log('🔐 執行 applyPermissions，當前 userLevel:', userLevel);
+    applyPermissions();
+}
+
 
         // 處理登入
 // ✅ 修改後：登入成功後預載入資料
@@ -2022,79 +2041,97 @@ async function preloadAllData() {
 
         // 應用權限設定
 function applyPermissions() {
-    if (!userLevel) return;
+    console.log('🔐 applyPermissions 開始執行');
+    console.log('👤 當前 userLevel:', userLevel);
+    console.log('📋 PERMISSIONS 配置:', PERMISSIONS);
+    
+    if (!userLevel) {
+        console.error('❌ userLevel 未設定，無法應用權限');
+        return;
+    }
     
     const allowedTabs = PERMISSIONS[userLevel] || [];
+    console.log('✅ 允許的標籤:', allowedTabs);
     
     // 處理導航標籤
     const allTabs = document.querySelectorAll('.nav-tab');
+    console.log('📌 找到', allTabs.length, '個導航標籤');
+    
     allTabs.forEach(tab => {
         const tabFunction = tab.getAttribute('onclick');
         if (tabFunction) {
             const tabName = tabFunction.match(/switchTab\('(\w+)'\)/)?.[1];
             
+            console.log(`🔍 檢查標籤: ${tabName}`);
+            
             // ✅ 修正：檢查該標籤是否在允許清單中
             if (tabName && !allowedTabs.includes(tabName)) {
+                console.log(`  ❌ ${tabName} 不在允許清單中，禁用`);
                 tab.classList.add('disabled');
                 tab.onclick = function(e) {
                     e.preventDefault();
                     alert('權限不足，無法訪問此功能');
                 };
             } else {
+                console.log(`  ✅ ${tabName} 在允許清單中，啟用`);
                 // ✅ 新增：如果在允許清單中，確保移除 disabled 類別
                 tab.classList.remove('disabled');
             }
         }
     });
-            
-            // 處理各頁面的權限控制
-            allowedTabs.forEach(tabName => {
+    
+    // 處理各頁面的權限控制
+    allowedTabs.forEach(tabName => {
+        const contentDiv = document.getElementById(tabName + 'Content');
+        const permissionDiv = document.getElementById(tabName + 'PermissionMessage');
+        
+        if (contentDiv && permissionDiv) {
+            contentDiv.style.display = 'block';
+            permissionDiv.style.display = 'none';
+        }
+    });
+    
+    // 隱藏無權限的頁面內容
+    Object.keys(PERMISSIONS).forEach(level => {
+        PERMISSIONS[level].forEach(tabName => {
+            if (!allowedTabs.includes(tabName)) {
                 const contentDiv = document.getElementById(tabName + 'Content');
                 const permissionDiv = document.getElementById(tabName + 'PermissionMessage');
                 
                 if (contentDiv && permissionDiv) {
-                    contentDiv.style.display = 'block';
-                    permissionDiv.style.display = 'none';
+                    contentDiv.style.display = 'none';
+                    permissionDiv.style.display = 'block';
                 }
-            });
-            
-            // 隱藏無權限的頁面內容
-            Object.keys(PERMISSIONS).forEach(level => {
-                PERMISSIONS[level].forEach(tabName => {
-                    if (!allowedTabs.includes(tabName)) {
-                        const contentDiv = document.getElementById(tabName + 'Content');
-                        const permissionDiv = document.getElementById(tabName + 'PermissionMessage');
-                        
-                        if (contentDiv && permissionDiv) {
-                            contentDiv.style.display = 'none';
-                            permissionDiv.style.display = 'block';
-                        }
-                    }
-                });
-            });
-            
-            // s1 用戶特殊處理：禁用所有按鈕
-            if (userLevel === 's1') {
-                disableAllButtons();
             }
-            
-            // 處理按鈕權限
-            const buttonsWithPermission = document.querySelectorAll('[data-permission]');
-            buttonsWithPermission.forEach(button => {
-                const requiredLevel = button.getAttribute('data-permission');
-                const requiredLevels = ['s1', 's2', 's3', 's4'];
-                const currentLevelIndex = requiredLevels.indexOf(userLevel);
-                const requiredLevelIndex = requiredLevels.indexOf(requiredLevel);
-                
-                if (currentLevelIndex < requiredLevelIndex) {
-                    button.classList.add('disabled');
-                    button.onclick = function(e) {
-                        e.preventDefault();
-                        alert('權限不足，無法使用此功能');
-                    };
-                }
-            });
+        });
+    });
+    
+    // s1 用戶特殊處理：禁用所有按鈕
+    if (userLevel === 's1') {
+        console.log('🔒 s1 用戶，禁用所有操作按鈕');
+        disableAllButtons();
+    }
+    
+    // 處理按鈕權限
+    const buttonsWithPermission = document.querySelectorAll('[data-permission]');
+    buttonsWithPermission.forEach(button => {
+        const requiredLevel = button.getAttribute('data-permission');
+        const requiredLevels = ['s1', 's2', 's3', 's4'];
+        const currentLevelIndex = requiredLevels.indexOf(userLevel);
+        const requiredLevelIndex = requiredLevels.indexOf(requiredLevel);
+        
+        if (currentLevelIndex < requiredLevelIndex) {
+            button.classList.add('disabled');
+            button.onclick = function(e) {
+                e.preventDefault();
+                alert('權限不足，無法使用此功能');
+            };
         }
+    });
+    
+    console.log('✅ applyPermissions 執行完成');
+}
+
 
         
 // 禁用所有按鈕（s1 專用）
