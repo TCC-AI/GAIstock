@@ -1082,7 +1082,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     height: 80px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    position: relative;
+    position: absolute;
     z-index: 2;
 }
 
@@ -1091,7 +1091,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     content: '';
     position: absolute;
     top: 0;
-    left: 80px;
+    left: 0;
     width: 80px;
     height: 80px;
     border-radius: 10px;
@@ -1109,7 +1109,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         height: 80px;
         opacity: 1;
         top: 0;        /* ✅ 開始位置 */
-        left: 20px;       /* ✅ 開始位置 */
+        left: 0;       /* ✅ 開始位置 */
     }
     100% {
         width: 130px;
