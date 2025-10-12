@@ -10,6 +10,22 @@
      <!-- ✅ 新增 Chart.js CDN（複製這一整行）-->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        /* ✅ 新增：廠商篩選提示樣式 */
+.vendor-filter-badge {
+    animation: fadeInBadge 0.5s ease-out;
+}
+
+@keyframes fadeInBadge {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
         /* ========== ✅ 新增：商品評析樣式 ========== */
 #productAnalysisTable {
     font-size: 0.9em;
@@ -1687,7 +1703,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
                             </div>
                             <div class="form-group">
                                 <label>Web App URL</label>
-                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbzxDeEK8wqqf-RU9gj93f1AGICBaUWf4rftC0D6mFAi4gAstA9-WiUOILFgd2eRLeWF/exec">
+                                <input type="text" class="form-control" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbyCsq6p1OLPoSLxr6NJRwrS9BdNZJ18gVQ4CTTc4YpYiea6Z8NggvJiNJvkzspbvbD8/exec">
                             </div>
                             <button class="btn btn-primary" onclick="testConnection()">測試連接</button>
                             <button class="btn btn-success" onclick="saveConnection()">儲存設定</button>
@@ -1737,7 +1753,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     
     <script>
         // 系統配置
-        let GAS_URL = 'https://script.google.com/macros/s/AKfycbzxDeEK8wqqf-RU9gj93f1AGICBaUWf4rftC0D6mFAi4gAstA9-WiUOILFgd2eRLeWF/exec';
+        let GAS_URL = 'https://script.google.com/macros/s/AKfycbyCsq6p1OLPoSLxr6NJRwrS9BdNZJ18gVQ4CTTc4YpYiea6Z8NggvJiNJvkzspbvbD8/exec';
         const SHEET_ID = '1Viqk5tApAs9xeT3s9NSN8K5Aej0nEdc53Eqc4dg96ts';
         
         // 用戶會話管理
@@ -1860,8 +1876,7 @@ function showMainSystem() {
 }
 
 
-        // 處理登入
-// ✅ 修改後：登入成功後預載入資料
+// ✅ 修改後：登入成功後儲存廠商名稱
 function handleLogin(event) {
     event.preventDefault();
     
@@ -1877,39 +1892,39 @@ function handleLogin(event) {
     
     callAPI('login', { account, password })
         .then(result => {
-            console.log('🔐 登入回應:', result); // ✅ Debug 1
+            console.log('🔐 登入回應:', result);
             
             if (result.success) {
-                // ✅ 確保取得正確的 level
                 const level = result.user.level || 's1';
+                const vendorName = result.user.vendor || 'A'; // ✅ 新增這行
                 
                 currentUser = {
                     account: account,
                     name: result.user.name || account,
                     title: result.user.title || '',
-                    level: level
+                    level: level,
+                    vendor: vendorName  // ✅ 新增這行
                 };
                 userLevel = level;
                 
-                console.log('👤 currentUser:', currentUser); // ✅ Debug 2
-                console.log('🔑 userLevel:', userLevel); // ✅ Debug 3
+                console.log('👤 currentUser:', currentUser);
+                console.log('🔑 userLevel:', userLevel);
+                console.log('🏭 vendorName:', vendorName); // ✅ 新增這行
                 
                 // ✅ 儲存到 sessionStorage
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
                 sessionStorage.setItem('userLevel', userLevel);
+                sessionStorage.setItem('vendorName', vendorName); // ✅ 新增這行
                 
-                // ✅ 驗證是否儲存成功
-                console.log('💾 sessionStorage.userLevel:', sessionStorage.getItem('userLevel')); // ✅ Debug 4
+                console.log('💾 sessionStorage.userLevel:', sessionStorage.getItem('userLevel'));
+                console.log('💾 sessionStorage.vendorName:', sessionStorage.getItem('vendorName')); // ✅ 新增這行
                 
                 showMainSystem();
                 
-                // ✅ 新增：預載入所有資料
                 preloadAllData().then(success => {
                     if (success) {
-                        // 預載完成後，顯示主控台
                         updateDashboard(systemData.dashboard);
                         
-                        // 顯示最後更新時間
                         const lastUpdateEl = document.getElementById('lastUpdate');
                         if (lastUpdateEl) {
                             lastUpdateEl.textContent = `最後更新: ${systemData.lastUpdate.toLocaleString('zh-TW')}`;
@@ -1927,6 +1942,7 @@ function handleLogin(event) {
             alert('登入過程發生錯誤，請稍後再試！');
         });
 }
+
 // ========== ✅ 新增：資料載入輔助函數 ==========
 
 /**
@@ -3370,11 +3386,15 @@ function loadProductAnalysis() {
         });
 }
 
-// 顯示商品評析資料
+// ========== ✅ 修改後：根據廠商名稱過濾商品評析 ==========
 function displayProductAnalysis() {
     const tbody = document.getElementById('productAnalysisTableBody');
+    const vendorName = sessionStorage.getItem('vendorName') || 'A'; // ✅ 取得廠商名稱
     
-    if (systemData.productAnalysis.length === 0) {
+    console.log('🏭 當前廠商名稱:', vendorName); // Debug
+    console.log('📊 原始商品資料:', systemData.productAnalysis); // Debug
+    
+    if (!systemData.productAnalysis || systemData.productAnalysis.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af;">
@@ -3387,7 +3407,72 @@ function displayProductAnalysis() {
         return;
     }
     
-    tbody.innerHTML = systemData.productAnalysis.map((product, index) => `
+    // ✅ 根據廠商名稱過濾資料
+    let filteredProducts = systemData.productAnalysis;
+    
+    if (vendorName !== 'A') {
+        // 只顯示該廠商的商品（supplier 欄位 = 廠商名稱）
+        filteredProducts = systemData.productAnalysis.filter(product => {
+            const match = product.supplier === vendorName;
+            console.log(`  檢查商品: ${product.name}, 廠商: ${product.supplier}, 符合: ${match}`); // Debug
+            return match;
+        });
+        
+        console.log('✅ 過濾後的商品:', filteredProducts); // Debug
+        
+        // 如果過濾後沒有資料
+        if (filteredProducts.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                        <div style="font-size: 16px; font-weight: bold;">沒有「${vendorName}」的商品評析資料</div>
+                        <div style="font-size: 14px; margin-top: 8px; color: #6b7280;">請確認【商品清冊】工作表中是否有該廠商的商品</div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+    }
+    
+    // ✅ 顯示範圍提示
+    const predictionSection = document.getElementById('prediction');
+    if (predictionSection) {
+        // 移除舊的提示
+        const oldBadge = predictionSection.querySelector('.vendor-filter-badge');
+        if (oldBadge) oldBadge.remove();
+        
+        // 新增提示
+        const badge = document.createElement('div');
+        badge.className = 'vendor-filter-badge';
+        badge.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: ${vendorName === 'A' ? 'linear-gradient(135deg, #28a745 0%, #20c997 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+            border-radius: 25px;
+            color: white;
+            font-size: 14px;
+            margin: 15px 0;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        `;
+        badge.innerHTML = `
+            <span style="font-size: 18px;">🏭</span>
+            <span style="font-weight: 700;">顯示範圍：${vendorName === 'A' ? '全部廠商' : vendorName}</span>
+            <span style="opacity: 0.95; font-size: 13px; padding-left: 8px; border-left: 1px solid rgba(255,255,255,0.3);">
+                ${filteredProducts.length} 項商品
+            </span>
+        `;
+        
+        const tableContainer = predictionSection.querySelector('.table-container');
+        if (tableContainer) {
+            tableContainer.parentElement.insertBefore(badge, tableContainer);
+        }
+    }
+    
+    // 渲染表格
+    tbody.innerHTML = filteredProducts.map((product, index) => `
         <tr>
             <td>${product.sku || ''}</td>
             <td>${product.name || ''}</td>
@@ -3413,6 +3498,7 @@ function displayProductAnalysis() {
         </tr>
     `).join('');
 }
+
 
 // Accordion 展開/收合
 function toggleAccordion(id) {
