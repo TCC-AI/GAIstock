@@ -1930,130 +1930,88 @@ function handleLogin(event) {
 
 
         // ✅ 新增：預載入所有資料
-/**
- * 根據用戶權限預載資料
- */
-/**
- * 根據用戶權限預載資料
- */
 async function preloadAllData() {
-    console.log('🔄 開始預載入所有資料...');
-    
-    const userLevel = sessionStorage.getItem('userLevel');
-    console.log(`👤 當前用戶等級: ${userLevel}`);
+    showLoading('正在載入系統資料，請稍候...');
     
     try {
-        // 📋 定義每個資料的權限要求
-        const dataPermissions = {
-            inventory: ['s2', 's3', 's4'],
-            demands: ['s3', 's4'],
-            predictions: ['s1', 's2', 's3', 's4'],  // ✅ s1 可以查看預測
-            replenishments: ['s3', 's4'],
-            capacity: ['s3', 's4'],
-            productAnalysis: ['s1', 's2', 's3', 's4']  // ✅ 所有用戶都可以查看
-        };
+        console.log('🚀 開始預載入所有資料...');
         
-        // 📦 根據權限決定要載入哪些資料
-        const tasksToRun = [];
+        // 根據權限決定要載入哪些資料
+        const promises = [];
         
-        // 庫存資料
-        if (dataPermissions.inventory.includes(userLevel)) {
-            console.log('✅ 載入庫存資料');
-            tasksToRun.push(fetchInventory());
-        } else {
-            console.log('⏭️ 跳過庫存資料（無權限）');
-            tasksToRun.push(Promise.resolve([]));
+        // 1️⃣ 所有用戶都載入主控台
+        promises.push(
+            callAPI('getDashboard')
+                .then(data => {
+                    systemData.dashboard = data;
+                    console.log('✅ 主控台資料載入完成');
+                })
+        );
+        
+        // 2️⃣ s2 以上載入庫存
+        if (checkPermission('s2')) {
+            promises.push(
+                callAPI('getInventory')
+                    .then(data => {
+                        systemData.inventory = data.items || [];
+                        console.log(`✅ 庫存資料載入完成 (${systemData.inventory.length} 筆)`);
+                    })
+            );
         }
         
-        // 需求設定
-        if (dataPermissions.demands.includes(userLevel)) {
-            console.log('✅ 載入需求設定');
-            tasksToRun.push(fetchDemands());
-        } else {
-            console.log('⏭️ 跳過需求設定（無權限）');
-            tasksToRun.push(Promise.resolve([]));
+        // 3️⃣ s3 以上載入需求、預測、補單、倉容
+        if (checkPermission('s3')) {
+            promises.push(
+                callAPI('getDemands')
+                    .then(data => {
+                        systemData.demands = data.demands || [];
+                        console.log(`✅ 需求設定載入完成 (${systemData.demands.length} 筆)`);
+                    }),
+                
+                callAPI('getPredictions')
+                    .then(data => {
+                        systemData.predictions = data.predictions || [];
+                        console.log(`✅ 預測結果載入完成 (${systemData.predictions.length} 筆)`);
+                    }),
+                
+                callAPI('getReplenishments')
+                    .then(data => {
+                        systemData.replenishments = data.suggestions || [];
+                        console.log(`✅ 補單建議載入完成 (${systemData.replenishments.length} 筆)`);
+                    }),
+                                callAPI('getProductAnalysis')
+                            .then(data => {
+                                systemData.productAnalysis = data.products || [];
+                                console.log(`✅ 商品評析載入完成 (${systemData.productAnalysis.length} 筆)`);
+                            }),
+                
+                callAPI('getCapacity')
+                    .then(data => {
+                        systemData.capacity = data;
+                        console.log('✅ 倉容資料載入完成');
+                    })
+            );
         }
         
-        // 預測結果
-        if (dataPermissions.predictions.includes(userLevel)) {
-            console.log('✅ 載入預測結果');
-            tasksToRun.push(fetchPredictions());
-        } else {
-            console.log('⏭️ 跳過預測結果（無權限）');
-            tasksToRun.push(Promise.resolve([]));
-        }
+        // 等待所有資料載入完成
+        await Promise.all(promises);
         
-        // 補單建議
-        if (dataPermissions.replenishments.includes(userLevel)) {
-            console.log('✅ 載入補單建議');
-            tasksToRun.push(fetchReplenishments());
-        } else {
-            console.log('⏭️ 跳過補單建議（無權限）');
-            tasksToRun.push(Promise.resolve([]));
-        }
+        // 記錄載入時間
+        systemData.lastUpdate = new Date();
+        systemData.isLoaded = true;
         
-        // 倉容資料
-        if (dataPermissions.capacity.includes(userLevel)) {
-            console.log('✅ 載入倉容資料');
-            tasksToRun.push(fetchCapacity());
-        } else {
-            console.log('⏭️ 跳過倉容資料（無權限）');
-            tasksToRun.push(Promise.resolve({ freezer: [], cooler: [] }));
-        }
+        hideLoading();
+        console.log('🎉 所有資料預載完成！', systemData);
         
-        // 🚀 並行執行所有任務
-        const [inventory, demands, predictions, replenishments, capacity] = await Promise.all(tasksToRun);
-        
-        // 📊 儲存資料到全域變數
-        window.allData = {
-            inventory: inventory || [],
-            demands: demands || [],
-            predictions: predictions || [],
-            replenishments: replenishments || [],
-            capacity: capacity || { freezer: [], cooler: [] }
-        };
-        
-        // ✅ 同步更新 systemData
-        systemData.inventory = inventory || [];
-        systemData.demands = demands || [];
-        systemData.predictions = predictions || [];
-        systemData.replenishments = replenishments || [];
-        systemData.capacity = capacity || { freezer: [], cooler: [] };
-        
-        console.log('✅ 所有資料預載完成！', window.allData);
-        
-        // 🎨 如果當前在預測頁面，重新渲染
-        const currentTab = document.querySelector('.tab-content.active');
-        if (currentTab && currentTab.id === 'prediction') {
-            console.log('🎨 重新渲染預測頁面');
-            
-            // ✅ 載入商品評析（所有用戶都可以看）
-            if (dataPermissions.productAnalysis.includes(userLevel)) {
-                if (systemData.productAnalysis && systemData.productAnalysis.length > 0) {
-                    displayProductAnalysis();
-                } else {
-                    loadProductAnalysis();
-                }
-            }
-            
-            // ✅ 載入預測資料（s3 以上才能看）
-            if (dataPermissions.predictions.includes(userLevel)) {
-                if (systemData.predictions && systemData.predictions.length > 0) {
-                    displayPredictions();
-                }
-            }
-        }
-        
-        return window.allData;
+        return true;
         
     } catch (error) {
-        console.error('❌ 預載資料時發生錯誤:', error);
-        showNotification('資料載入失敗：' + error.message, 'error');
-        return null;
+        hideLoading();
+        console.error('❌ 預載資料失敗:', error);
+        alert('部分資料載入失敗，將在切換頁面時重新載入\n錯誤訊息：' + error.message);
+        return false;
     }
 }
-
-
 
 
         // 更新用戶資訊顯示
