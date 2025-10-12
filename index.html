@@ -1061,7 +1061,7 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
         transform: translateY(0);
     }
 }
-/* ========== ✅ Logo 波紋動畫效果（修正版） ========== */
+/* ========== ✅ Logo 波紋動畫效果（終極修正版） ========== */
 
 /* Logo 外層容器 */
 .header-logo-wrapper {
@@ -1100,27 +1100,40 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
     pointer-events: none;
 }
 
+/* 第二層波紋（可選） */
+.header-logo-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    border: 5px solid rgba(3, 103, 161, 0.3);
+    animation: logoRipple 2.5s infinite ease-out 0.8s;
+    pointer-events: none;
+}
 
-
-/* 波紋動畫 */
+/* ✅ 波紋動畫（正確版本） */
 @keyframes logoRipple {
     0% {
         width: 80px;
         height: 80px;
         opacity: 1;
-        top: -20px;
-        left: 0;
+        top: 0;        /* ✅ 開始位置 */
+        left: 0;       /* ✅ 開始位置 */
     }
     100% {
         width: 130px;
         height: 130px;
         opacity: 0;
-        top: 0px;
-        left: 0px;
+        top: -25px;    /* ✅ 向上偏移 25px */
+        left: -25px;   /* ✅ 向左偏移 25px */
     }
 }
 
 /* ========== Logo 波紋動畫結束 ========== */
+
 
 
     </style>
