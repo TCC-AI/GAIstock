@@ -1515,18 +1515,13 @@ input[type="date"]:hover::-webkit-calendar-picker-indicator {
             </div>
             
             <!-- 資料呈現框架 -->
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <h3 style="margin: 0; color: #333;">📊 商品分析清單</h3>
-    <div style="display: flex; gap: 10px;">
-        <button class="btn btn-success" id="toggleAllBtn" onclick="toggleAllAccordions()">
-            🔽 一鍵展開
-        </button>
-        <button class="btn btn-primary" onclick="refreshProductAnalysis()">
-            🔄 重新整理
-        </button>
-    </div>
-</div>
-
+            <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #333;">📊 商品分析清單</h3>
+                    <button class="btn btn-primary" onclick="refreshProductAnalysis()">
+                        🔄 重新整理
+                    </button>
+                </div>
                 
                 <!-- 表格容器 -->
                 <div class="table-container" style="max-height: 600px; overflow-y: auto;">
@@ -4489,76 +4484,6 @@ function hideEmailLoading() {
             
             showModal('歷史預測記錄', '<p>功能開發中...</p>');
         }
-        // ========== ✅ 新增：一鍵開合所有 Accordion ==========
-
-// 全域變數：追蹤當前狀態（true=全部展開，false=全部收合）
-let allAccordionsExpanded = false;
-
-/**
- * 一鍵展開/收合所有 Accordion
- */
-function toggleAllAccordions() {
-    const btn = document.getElementById('toggleAllBtn');
-    const allContents = document.querySelectorAll('.accordion-content');
-    const allBtns = document.querySelectorAll('.accordion-btn');
-    
-    if (allAccordionsExpanded) {
-        // 🔼 全部收合
-        allContents.forEach(content => {
-            content.classList.remove('active');
-        });
-        
-        allBtns.forEach(accordionBtn => {
-            accordionBtn.classList.remove('active');
-            const icon = accordionBtn.querySelector('span[id^="trend-icon-"], span[id^="strategy-icon-"]');
-            if (icon) icon.textContent = '▼';
-        });
-        
-        // 更新按鈕文字
-        btn.innerHTML = '🔽 一鍵展開';
-        allAccordionsExpanded = false;
-        
-    } else {
-        // 🔽 全部展開
-        allContents.forEach(content => {
-            content.classList.add('active');
-        });
-        
-        allBtns.forEach(accordionBtn => {
-            accordionBtn.classList.add('active');
-            const icon = accordionBtn.querySelector('span[id^="trend-icon-"], span[id^="strategy-icon-"]');
-            if (icon) icon.textContent = '▲';
-        });
-        
-        // 更新按鈕文字
-        btn.innerHTML = '🔼 一鍵收合';
-        allAccordionsExpanded = true;
-    }
-}
-
-/**
- * 修改原有的 toggleAccordion 函數（不影響一鍵開合按鈕狀態）
- */
-// ✅ 找到原有的 toggleAccordion 函數（約在第 2550 行），替換為以下版本：
-function toggleAccordion(id) {
-    const content = document.getElementById(id);
-    const iconId = id.replace('trend-', 'trend-icon-').replace('strategy-', 'strategy-icon-');
-    const icon = document.getElementById(iconId);
-    const btn = icon.parentElement;
-    
-    if (content.classList.contains('active')) {
-        content.classList.remove('active');
-        icon.textContent = '▼';
-        btn.classList.remove('active');
-    } else {
-        content.classList.add('active');
-        icon.textContent = '▲';
-        btn.classList.add('active');
-    }
-    
-    // ⚠️ 不更新一鍵開合按鈕狀態（方案B：獨立運作）
-}
-
     </script>
 </body>
 </html>
